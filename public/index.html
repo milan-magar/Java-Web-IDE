@@ -1,0 +1,3255 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Web IDE</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23f89820'/><stop offset='1' stop-color='%235382a1'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='url(%23g)'/><path d='M22 16q-2-5 1-9M32 14q-2-5 1-9M42 16q-2-5 1-9' stroke='%23fff' stroke-width='3' stroke-linecap='round' fill='none' opacity='0.85'/><path d='M16 24h28v14a12 12 0 0 1-12 12h-4a12 12 0 0 1-12-12z' fill='%23fff'/><path d='M44 28h4a7 7 0 0 1 0 14h-4' stroke='%23fff' stroke-width='4' fill='none'/></svg>">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --font-size: 15px;
+    --line-height: 1.42;
+    --line-box: calc(var(--font-size) * var(--line-height));
+    --pad-y: 14px;
+    --pad-x: 16px;
+    --mono: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+    --bg: #1e1e1e;
+    --bg-panel: #252526;
+    --bg-elev: #2d2d30;
+    --bg-term: #181818;
+    --border: #3c3c3c;
+    --fg: #d4d4d4;
+    --fg-muted: #858585;
+    --accent: #0e639c;
+    --accent-hover: #1177bb;
+    --gutter-bg: #1e1e1e;
+    --gutter-fg: #6e7681;
+    --selection: rgba(38, 79, 120, 0.65);
+    --guide: rgba(255, 255, 255, 0.28);
+    --guide-active: rgba(255, 255, 255, 0.85);
+    --guide-width: 0.75px;
+    --active-line-bg: rgba(255, 255, 255, 0.055);
+    --bracket-hl-bg: rgba(100, 160, 240, 0.18);
+    --bracket-hl-border: rgba(100, 160, 240, 0.75);
+    --ok: #4ec9b0;
+    --warn: #dcdcaa;
+    --err: #f48771;
+
+    --tok-keyword: #569cd6;
+    --tok-string: #ce9178;
+    --tok-comment: #6a9955;
+    --tok-number: #b5cea8;
+    --tok-type: #4ec9b0;
+    --tok-literal: #569cd6;
+    --tok-annotation: #dcdcaa;
+    --tok-method: #dcdcaa;
+  }
+
+  [data-theme="light"] {
+    --bg:        #d4d4d4;
+    --bg-panel:  #dedede;
+    --bg-elev:   #c9c9c9;
+    --bg-term:   #d0d0d0;
+    --border:    #a8a8a8;
+    --fg:        #1a1a1a;
+    --fg-muted:  #5a5a5a;
+    --accent:    #0e639c;
+    --accent-hover: #1177bb;
+    --gutter-bg: #c8c8c8;
+    --gutter-fg: #6e6e6e;
+    --selection: rgba(80, 130, 200, 0.42);
+    --guide:     rgba(0, 0, 0, 0.18);
+    --guide-active: rgba(0, 0, 0, 0.65);
+    --active-line-bg: rgba(0, 0, 0, 0.075);
+    --bracket-hl-bg: rgba(60, 120, 200, 0.15);
+    --bracket-hl-border: rgba(60, 120, 200, 0.75);
+    --ok:        #098658;
+    --warn:      #795e26;
+    --err:       #b5200d;
+
+    --tok-keyword: #0000ff;
+    --tok-string: #a31515;
+    --tok-comment: #008000;
+    --tok-number: #098658;
+    --tok-type: #267f99;
+    --tok-literal: #0000ff;
+    --tok-annotation: #795e26;
+    --tok-method: #795e26;
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--bg); color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    transition: background .2s ease, color .2s ease;
+    overflow: hidden;
+  }
+
+  .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo {
+    display: grid; place-items: center;
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg, #f89820 0%, #5382a1 100%);
+    color: #fff; font-family: var(--mono); font-size: 12px; font-weight: 700;
+    letter-spacing: -.5px; box-shadow: 0 2px 8px rgba(248,152,32,.25);
+  }
+  .brand h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: .2px; white-space: nowrap; }
+
+  .jdk-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 26px; padding: 0 10px;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: var(--bg-panel);
+    font-family: var(--mono); font-size: 11.5px; color: var(--fg-muted);
+    white-space: nowrap;
+  }
+  .jdk-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fg-muted); flex: 0 0 auto; transition: background .15s, box-shadow .15s; }
+  .jdk-badge.ok  { color: var(--ok);  border-color: rgba(78,201,176,.4); }
+  .jdk-badge.ok  .dot { background: var(--ok);  box-shadow: 0 0 6px var(--ok); }
+  .jdk-badge.bad { color: var(--err); border-color: rgba(244,135,113,.4); }
+  .jdk-badge.bad .dot { background: var(--err); box-shadow: 0 0 6px var(--err); }
+
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+  .field {
+    display: flex; align-items: center; gap: 6px;
+    height: 34px; padding: 0 10px;
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 7px;
+    transition: border-color .15s;
+  }
+  .field:focus-within { border-color: var(--accent); }
+  .field-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--fg-muted); }
+  .field input {
+    width: 110px; padding: 0; border: 0; outline: none;
+    background: transparent; color: var(--fg);
+    font: inherit; font-size: 14px; font-family: var(--mono);
+  }
+  .field.args-field input { width: 130px; }
+  .field .ext { color: var(--fg-muted); font-family: var(--mono); font-size: 13px; }
+  .field .auto-badge {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--fg-muted); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 5px; opacity: .8;
+  }
+  .field .auto-badge[hidden] { display: none; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 34px; padding: 0 14px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg-elev); color: var(--fg);
+    font: inherit; font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap;
+    transition: background .15s, border-color .15s, transform .05s;
+  }
+  .btn:hover { background: var(--border); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn:disabled:hover { background: var(--bg-elev); }
+
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+  .btn.run { background: #238636; border-color: #2ea043; color: #fff; }
+  .btn.run:hover { background: #2ea043; border-color: #3fb950; }
+  .btn.run:disabled { background: #238636; }
+  .btn.run.stop { background: #a4303a; border-color: #c3424f; }
+  .btn.run.stop:hover { background: #c3424f; border-color: #e25563; }
+
+  .btn.run-save { background: #2ea043; border-color: #3fb950; color: #fff; }
+  .btn.run-save:hover { background: #3fb950; border-color: #56d364; }
+  .btn.run-save:disabled { background: #2ea043; opacity: .45; }
+  .btn.run-save:disabled:hover { background: #2ea043; }
+
+  .btn .spin {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn.icon { padding: 0 10px; font-family: var(--mono); font-size: 12px; }
+  .btn.icon.help { font-weight: 700; font-size: 14px; padding: 0 11px; }
+  .btn.icon.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .btn.folder-btn { padding: 0 12px 0 10px; max-width: 220px; }
+  .btn.folder-btn .ico { font-size: 14px; line-height: 1; }
+  .btn.folder-btn .folder-name {
+    font-family: var(--mono); font-size: 12.5px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;
+  }
+  .btn.folder-btn.unset .folder-name { color: var(--fg-muted); }
+  .btn.folder-btn.attention { border-color: var(--warn); color: var(--warn); }
+  .btn.folder-btn.attention .folder-name { color: var(--warn); }
+
+  /* ---------------- Workspace ---------------- */
+  .workspace {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: row; gap: 0; align-items: stretch;
+  }
+
+  /* ---------------- File tree ---------------- */
+  .tree-panel {
+    flex: 0 0 240px;
+    min-width: 140px;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .22);
+  }
+  .tree-panel.hidden { display: none; }
+  .tree-head {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
+    color: var(--fg-muted);
+  }
+  .tree-head .tree-title { flex: 1 1 auto; color: var(--fg); font-weight: 600; }
+  .tree-head button {
+    background: none; border: 1px solid var(--border); color: var(--fg-muted);
+    border-radius: 5px; height: 22px; padding: 0 8px;
+    font: inherit; font-size: 12px; cursor: pointer;
+  }
+  .tree-head button:hover { color: var(--fg); border-color: var(--fg-muted); }
+  .tree-body {
+    flex: 1 1 auto; overflow: auto;
+    padding: 6px 0;
+    font-family: var(--mono); font-size: 12.5px;
+    scrollbar-width: thin;
+  }
+  .tree-body::-webkit-scrollbar { width: 10px; }
+  .tree-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  .tree-row {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 8px 3px 4px;
+    cursor: pointer; white-space: nowrap;
+    border-radius: 4px;
+  }
+  .tree-row:hover { background: var(--bg-elev); }
+  .tree-row.active { background: var(--accent); color: #fff; }
+  .tree-toggle {
+    display: inline-block; width: 12px; text-align: center;
+    color: var(--fg-muted); font-size: 9px; flex: 0 0 auto;
+    transition: color .1s;
+  }
+  .tree-row:hover .tree-toggle { color: var(--fg); }
+  .tree-row.active .tree-toggle { color: #fff; }
+  .tree-icon { flex: 0 0 auto; font-size: 12px; }
+  .tree-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
+  .tree-empty {
+    padding: 12px 14px; color: var(--fg-muted);
+    font-size: 12px; line-height: 1.5;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-style: italic;
+  }
+
+  .splitter-tree {
+    flex: 0 0 6px;
+    cursor: col-resize;
+    position: relative;
+    background: transparent;
+    user-select: none;
+  }
+  .splitter-tree.hidden { display: none; }
+  .splitter-tree::after {
+    content: "";
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px; height: 40px; border-radius: 3px;
+    background: var(--border);
+    transition: background .15s, height .15s;
+  }
+  .splitter-tree:hover::after,
+  body.resizing-tree .splitter-tree::after { background: var(--accent); height: 64px; }
+  body.resizing-tree { cursor: col-resize; }
+  body.resizing-tree .editor-area,
+  body.resizing-tree .side-panel,
+  body.resizing-tree .tree-panel { pointer-events: none; }
+
+  /* ---------------- Editor ---------------- */
+  .editor-shell {
+    flex: 1 1 0; min-width: 220px;
+    display: flex;
+    border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; background: var(--bg-panel);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .22);
+    position: relative;
+  }
+  .gutter {
+    flex: 0 0 auto; overflow: hidden;
+    background: var(--gutter-bg);
+    border-right: 1px solid var(--border);
+    user-select: none;
+    display: flex; flex-direction: row;
+  }
+  .fold-col {
+    flex: 0 0 14px;
+    padding: var(--pad-y) 0 var(--pad-y) 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: var(--line-height);
+    color: var(--gutter-fg);
+    text-align: center;
+    will-change: transform;
+  }
+  .fold-col > div {
+    height: var(--line-box);
+    line-height: var(--line-box);
+    cursor: default;
+  }
+  .fold-col > div.foldable { cursor: pointer; opacity: .55; }
+  .fold-col > div.foldable:hover { opacity: 1; color: var(--fg); }
+
+  .line-numbers {
+    flex: 0 0 auto;
+    padding: var(--pad-y) 12px var(--pad-y) 4px;
+    font-family: var(--mono);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    font-variant-ligatures: none;
+    color: var(--gutter-fg);
+    text-align: right;
+    will-change: transform;
+  }
+  .line-numbers > div {
+    height: var(--line-box);
+    line-height: var(--line-box);
+  }
+
+  .editor-area { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+
+  .highlight, .editor {
+    position: absolute; inset: 0; margin: 0;
+    padding: var(--pad-y) var(--pad-x); border: 0;
+    font-family: var(--mono); font-size: var(--font-size); line-height: var(--line-height);
+    font-variant-ligatures: none; tab-size: 2; -moz-tab-size: 2;
+    white-space: pre; overflow-wrap: normal; word-break: normal;
+  }
+  .highlight { overflow: hidden; pointer-events: none; background: transparent; color: var(--fg); z-index: 0; }
+  .highlight code { display: block; font: inherit; color: inherit; }
+
+  .overlay-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  .overlay-track { position: absolute; inset: 0; will-change: transform; }
+  .active-line { position: absolute; left: 0; right: 0; display: none; background: var(--active-line-bg); pointer-events: none; }
+  .bracket-hl {
+    position: absolute; display: none;
+    background: var(--bracket-hl-bg);
+    border: 1px solid var(--bracket-hl-border);
+    box-sizing: border-box; border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .guides { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  .guides-track { position: absolute; inset: 0; will-change: transform; }
+  .guide { position: absolute; width: var(--guide-width); background: var(--guide); transform: translateX(-50%); transition: background .12s ease; }
+  .guide.active { background: var(--guide-active); }
+
+  .editor { z-index: 1; overflow: auto; resize: none; outline: none; background: transparent; color: transparent; caret-color: var(--fg); }
+  .editor::placeholder { color: var(--fg-muted); }
+  .editor::selection { background: var(--selection); color: transparent; }
+  .editor-shell.no-guides .guides { display: none; }
+
+  /* ---------------- Autocomplete popup ---------------- */
+  .ac-popup {
+    position: fixed;
+    z-index: 200;
+    min-width: 200px; max-width: 340px;
+    max-height: 240px;
+    overflow-y: auto;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .55);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    scrollbar-width: thin;
+  }
+  .ac-popup[hidden] { display: none; }
+  .ac-item {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .ac-item .ac-kind {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--fg-muted); min-width: 34px; flex: 0 0 auto;
+  }
+  .ac-item .ac-label { overflow: hidden; text-overflow: ellipsis; }
+  .ac-item.selected { background: var(--accent); color: #fff; }
+  .ac-item.selected .ac-kind { color: #c8e2f5; }
+
+  /* ---------------- Vertical splitter ---------------- */
+  .splitter-v { flex: 0 0 8px; cursor: col-resize; position: relative; background: transparent; user-select: none; }
+  .splitter-v::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px; height: 40px; border-radius: 3px; background: var(--border);
+    transition: background .15s, height .15s;
+  }
+  .splitter-v:hover::after, body.resizing-v .splitter-v::after { background: var(--accent); height: 64px; }
+  body.resizing-v { cursor: col-resize; }
+  body.resizing-v .editor-area { pointer-events: none; }
+  body.resizing-v .side-panel { pointer-events: none; }
+
+  /* ---------------- Side panel ---------------- */
+  .side-panel {
+    flex: 0 0 42%; min-width: 240px; max-width: 75%;
+    display: flex; flex-direction: column;
+    background: var(--bg-term);
+    border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 8px 30px rgba(0, 0, 0, .22);
+  }
+  .term-head {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--fg-muted);
+  }
+  .term-head .tab { display: inline-flex; align-items: center; gap: 6px; color: var(--fg); font-weight: 600; }
+  .term-head .tab::before { content: "›_"; font-family: var(--mono); color: var(--ok); }
+  .term-head .status {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    text-transform: none; letter-spacing: 0;
+    font-family: var(--mono); font-size: 11.5px;
+  }
+  .term-head .pill { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--fg-muted); transition: color .15s, border-color .15s; }
+  .term-head .pill.ok   { color: var(--ok);   border-color: var(--ok); }
+  .term-head .pill.bad  { color: var(--err);  border-color: var(--err); }
+  .term-head .pill.busy { color: var(--warn); border-color: var(--warn); }
+  .term-head button {
+    background: none; border: 1px solid var(--border); color: var(--fg-muted);
+    border-radius: 5px; height: 22px; padding: 0 8px;
+    font: inherit; font-size: 11px; cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .term-head button:hover { color: var(--fg); border-color: var(--fg-muted); }
+
+  .term-body {
+    flex: 1 1 auto; min-height: 60px; overflow: auto;
+    padding: 12px 14px 20px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+    white-space: pre-wrap; word-break: break-word;
+    scrollbar-width: thin;
+    cursor: text;
+  }
+  .term-body::-webkit-scrollbar { width: 11px; height: 11px; }
+  .term-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; border: 3px solid var(--bg-term); }
+
+  .term-body .line        { display: block; }
+  .term-body .line.meta   { color: var(--fg-muted); }
+  .term-body .line.stdout { color: var(--fg); }
+  .term-body .line.stderr { color: var(--err); }
+  .term-body .line.note   { color: var(--warn); }
+  .term-body .line.ok     { color: var(--ok); }
+  .term-body .line.prompt { color: var(--accent-hover); font-weight: 600; }
+  .term-body .line.echo   { color: var(--accent-hover); }
+  .term-body .placeholder { color: var(--fg-muted); font-style: italic; }
+
+  .term-body .stack-link {
+    color: var(--accent-hover);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    cursor: pointer;
+  }
+  .term-body .stack-link:hover { background: var(--accent); color: #fff; }
+
+  .term-input-row {
+    display: none;
+    align-items: baseline;
+    gap: 4px;
+    margin-top: 2px;
+    min-height: 1.55em;
+  }
+  .term-input-row.show { display: flex; }
+  .term-input-prompt {
+    color: var(--accent-hover);
+    font-weight: 700;
+    flex: 0 0 auto;
+    font-family: var(--mono);
+  }
+  .term-input {
+    flex: 1 1 auto; min-width: 0;
+    background: transparent; border: 0; outline: none; padding: 0;
+    color: var(--accent-hover);
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+    caret-color: var(--accent-hover);
+  }
+  .term-input::placeholder { color: var(--fg-muted); font-style: italic; }
+
+  .stdin-wrap {
+    flex: 0 0 auto; display: flex; flex-direction: column;
+    border-top: 1px solid var(--border);
+    background: var(--bg-panel);
+    max-height: 34%; min-height: 74px;
+    transition: background .15s, border-color .15s, opacity .15s;
+  }
+  .stdin-wrap.inactive { opacity: .55; }
+  .stdin-wrap.interactive { background: var(--bg-elev); border-top-color: var(--accent); }
+  .stdin-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--fg-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .stdin-head .hint { text-transform: none; letter-spacing: 0; opacity: .7; font-size: 11px; }
+  .stdin-head .mode-tag { padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .5px; color: var(--fg-muted); border: 1px solid var(--border); }
+  .stdin-wrap.cmd-mode .mode-tag { color: var(--accent-hover); border-color: var(--accent-hover); }
+  .stdin-wrap.interactive .mode-tag { color: var(--ok); border-color: var(--ok); }
+  .stdin-wrap textarea {
+    flex: 1 1 auto; resize: none;
+    margin: 8px 10px 10px; padding: 8px 10px;
+    background: var(--bg-term); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+    outline: none;
+  }
+  .stdin-wrap textarea:focus { border-color: var(--accent); }
+  .stdin-wrap textarea:disabled { opacity: .6; cursor: not-allowed; }
+  .stdin-wrap.cmd-mode { background: var(--bg-elev); min-height: 42px; max-height: 42px; }
+  .stdin-wrap.cmd-mode textarea {
+    flex: 0 0 auto;
+    height: 22px; min-height: 22px;
+    margin: 6px 10px 8px;
+    padding: 3px 8px;
+    font-size: 13px; line-height: 1.4;
+  }
+  .stdin-wrap.cmd-mode .stdin-head { border-bottom: 0; padding-top: 5px; padding-bottom: 0; }
+  .stdin-wrap.cmd-mode .hint { display: none; }
+
+  .tok-keyword    { color: var(--tok-keyword); }
+  .tok-string     { color: var(--tok-string); }
+  .tok-comment    { color: var(--tok-comment); font-style: italic; }
+  .tok-number     { color: var(--tok-number); }
+  .tok-type       { color: var(--tok-type); }
+  .tok-literal    { color: var(--tok-literal); }
+  .tok-annotation { color: var(--tok-annotation); }
+  .tok-method     { color: var(--tok-method); }
+
+  .statusbar {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 16px; padding: 0 6px;
+    font-family: var(--mono); font-size: 12px; color: var(--fg-muted);
+  }
+  .statusbar .spacer { flex: 1 1 auto; }
+  .statusbar .hint { opacity: .6; }
+  #statusState.saved  { color: var(--ok); }
+  #statusState.dirty  { color: var(--warn); }
+  #statusState.error  { color: var(--err); }
+  #statusFolder { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 300; padding: 20px;
+    display: grid; place-items: center;
+    background: rgba(0, 0, 0, .55);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    opacity: 0; visibility: hidden;
+    transition: opacity .18s ease, visibility .18s ease;
+  }
+  .modal-backdrop.open { opacity: 1; visibility: visible; }
+  .modal {
+    width: 100%; max-width: 720px; max-height: min(86vh, 760px);
+    display: flex; flex-direction: column;
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .55); overflow: hidden;
+    transform: translateY(10px) scale(.98);
+    transition: transform .2s cubic-bezier(.2, .8, .3, 1);
+  }
+  .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 16px 20px;
+    border-bottom: 1px solid var(--border); background: var(--bg-elev);
+    flex: 0 0 auto;
+  }
+  .modal-head h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
+  .modal-head h2 .emoji { font-size: 18px; }
+  .modal-close {
+    width: 30px; height: 30px; display: grid; place-items: center;
+    border: 1px solid var(--border); background: var(--bg-panel); color: var(--fg);
+    font: inherit; font-size: 14px; border-radius: 7px; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .modal-close:hover { background: var(--border); }
+  .modal-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .modal-body { padding: 18px 20px 24px; overflow-y: auto; flex: 1 1 auto; scrollbar-width: thin; }
+  .modal-body::-webkit-scrollbar { width: 10px; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--border); border: 3px solid var(--bg-panel); border-radius: 6px; }
+  .tips-section + .tips-section { margin-top: 22px; }
+  .tips-section h3 {
+    margin: 0 0 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.1px;
+    text-transform: uppercase; color: var(--fg-muted);
+  }
+  .tips-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .tips-list li {
+    display: grid; grid-template-columns: minmax(150px, max-content) 1fr;
+    gap: 16px; align-items: baseline;
+    padding: 7px 10px; border-radius: 7px;
+    font-size: 13.5px; line-height: 1.5;
+    transition: background .12s ease;
+  }
+  .tips-list li:hover { background: var(--bg-elev); }
+  .tips-list li .keys { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .tips-list li .keys .sep { color: var(--fg-muted); font-size: 11px; padding: 0 1px; }
+  kbd {
+    display: inline-block;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+    line-height: 1; padding: 4px 7px;
+    border: 1px solid var(--border); border-bottom-width: 2px;
+    border-radius: 5px; background: var(--bg-elev);
+    color: var(--fg); white-space: nowrap;
+    box-shadow: 0 1px 0 rgba(0,0,0,.15);
+  }
+  .tips-note {
+    margin-top: 24px; padding: 12px 14px;
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; background: var(--bg-elev);
+    font-size: 13px; line-height: 1.55; color: var(--fg);
+  }
+  .tips-note strong { color: var(--accent); }
+  .tips-note .emoji { font-size: 15px; margin-right: 4px; }
+
+  @media (max-width: 900px) {
+    .brand h1 { display: none; }
+    .statusbar .hint { display: none; }
+    .jdk-badge { display: none; }
+  }
+  @media (max-width: 760px) {
+    body { padding: 10px; gap: 8px; }
+    .field input { width: 76px; }
+    .field.args-field input { width: 90px; }
+    .btn { padding: 0 10px; }
+    .btn.folder-btn .folder-name { max-width: 90px; }
+    .field .auto-badge { display: none; }
+    .tips-list li { grid-template-columns: 1fr; gap: 4px; }
+    .modal-backdrop { padding: 8px; }
+    .workspace { flex-direction: column; }
+    .tree-panel { flex: 0 0 200px; max-height: 200px; }
+    .splitter-v, .splitter-tree { flex: 0 0 6px; cursor: row-resize; }
+    .splitter-v::after, .splitter-tree::after { width: 40px; height: 3px; }
+    .side-panel { flex: 0 0 40%; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">{ }</span>
+      <h1>Java Web IDE</h1>
+      <span class="jdk-badge" id="jdkBadge" title="JDK status">
+        <span class="dot"></span><span id="jdkText">checking JDK…</span>
+      </span>
+    </div>
+
+    <div class="toolbar">
+      <label class="field" for="fileName">
+        <span class="field-label">File</span>
+        <input type="text" id="fileName" value="Main" spellcheck="false" autocomplete="off">
+        <span class="ext">.java</span>
+        <span class="auto-badge" id="autoBadge" title="File name follows the public class in your code">auto</span>
+      </label>
+
+      <label class="field args-field" for="argsInput" title='Command-line arguments (e.g. foo 42 "hello world")'>
+        <span class="field-label">Args</span>
+        <input type="text" id="argsInput" placeholder="(none)" spellcheck="false" autocomplete="off">
+      </label>
+
+      <button class="btn icon" id="treeBtn" type="button" title="Toggle file tree (Ctrl+B)">🗂️</button>
+
+      <button class="btn folder-btn unset" id="folderBtn" type="button" title="Choose the folder where files will be saved">
+        <span class="ico">📁</span>
+        <span class="folder-name" id="folderName">No folder</span>
+      </button>
+
+      <button class="btn" id="openBtn" type="button" title="Open a .java file">Open</button>
+      <button class="btn primary" id="saveBtn" type="button" title="Save (Ctrl+S)">Save</button>
+      <button class="btn" id="saveAsBtn" type="button" title="Save to a different location">Save As…</button>
+      <button class="btn" id="copyBtn" type="button" title="Copy all code">Copy</button>
+      <button class="btn" id="clearBtn" type="button" title="Clear the editor">Clear</button>
+      <button class="btn icon on" id="guidesBtn" type="button" title="Toggle indent guides">⫴</button>
+      <button class="btn icon" id="themeBtn" type="button" title="Toggle light / dark theme">☀️</button>
+      <button class="btn icon" id="fontDown" type="button" title="Smaller font">A−</button>
+      <button class="btn icon" id="fontUp" type="button" title="Larger font">A+</button>
+      <button class="btn icon help" id="tipsBtn" type="button" title="Shortcuts & tips (F1)">?</button>
+
+      <button class="btn run" id="runBtn" type="button" title="Compile &amp; run interactively (Ctrl+Enter)">
+        <span id="runLabel">▶ Run</span>
+      </button>
+      <button class="btn run-save" id="saveRunBtn" type="button" title="Save java/ and class/ into your folder, then run interactively (Ctrl+Shift+Enter)">
+        <span id="saveRunLabel">💾 Save &amp; Run</span>
+      </button>
+
+      <button class="btn icon" id="cmdBtn" type="button" title="Toggle CMD mode">⌨ CMD</button>
+
+      <input type="file" id="fileInput" accept=".java,.txt,text/plain" hidden>
+    </div>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <aside class="tree-panel hidden" id="treePanel">
+      <div class="tree-head">
+        <span class="tree-title">Files</span>
+        <button id="treeRefresh" type="button" title="Refresh">⟳</button>
+      </div>
+      <div class="tree-body" id="treeBody">
+        <div class="tree-empty">Select a folder with 📁 to see files here.</div>
+      </div>
+    </aside>
+    <div class="splitter-tree hidden" id="splitterTree" title="Drag to resize"></div>
+
+    <section class="editor-shell" id="editorShell">
+      <div class="gutter">
+        <div class="fold-col" id="foldCol"></div>
+        <div class="line-numbers" id="lineNumbers"></div>
+      </div>
+      <div class="editor-area">
+        <pre class="highlight" id="highlight" aria-hidden="true"><code id="highlightCode"></code></pre>
+        <div class="overlay-layer" aria-hidden="true">
+          <div class="overlay-track" id="overlayTrack">
+            <div class="active-line" id="activeLine"></div>
+            <div class="bracket-hl" id="bracketA"></div>
+            <div class="bracket-hl" id="bracketB"></div>
+          </div>
+        </div>
+        <div class="guides" aria-hidden="true"><div class="guides-track" id="guidesTrack"></div></div>
+        <textarea id="editor" class="editor" spellcheck="false" wrap="off"
+                  autocomplete="off" autocorrect="off" autocapitalize="off"
+                  placeholder="Write your Java code here..."></textarea>
+      </div>
+    </section>
+
+    <div class="splitter-v" id="splitterV" title="Drag to resize"></div>
+
+    <aside class="side-panel" id="sidePanel">
+      <div class="term-head">
+        <span class="tab">Terminal</span>
+        <div class="status">
+          <span class="pill" id="runStatus">idle</span>
+          <span id="runTime"></span>
+          <button id="clearOut" type="button">clear</button>
+        </div>
+      </div>
+      <div class="term-body" id="termBody">
+        <span class="placeholder" id="termPlaceholder">Press ▶ Run (or Ctrl+Enter). While a program runs, click here and type — press Enter to send a line to System.in.</span>
+        <div class="term-input-row" id="termInputRow">
+          <span class="term-input-prompt">&gt;</span>
+          <input type="text" class="term-input" id="termInput" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="type input for the running program…">
+        </div>
+      </div>
+      <div class="stdin-wrap" id="stdinWrap">
+        <div class="stdin-head">
+          <span class="mode-tag" id="inputModeTag">STDIN</span>
+          <span class="hint" id="inputHint">— pre-filled into System.in when the program starts</span>
+        </div>
+        <textarea id="stdinBox" spellcheck="false" placeholder="e.g.&#10;42&#10;hello"></textarea>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="statusbar">
+    <span id="statusPos">Ln 1, Col 1</span>
+    <span id="statusSel"></span>
+    <span id="statusLines">1 line</span>
+    <span id="statusChars">0 chars</span>
+    <span id="statusFolder"></span>
+    <span class="spacer"></span>
+    <span id="statusState">Ready</span>
+    <span class="hint">Ctrl+Enter Run · Ctrl+B Tree · Ctrl+Space Complete · F1 help</span>
+  </footer>
+
+  <div class="ac-popup" id="acPopup" hidden></div>
+
+  <div class="modal-backdrop" id="tipsBackdrop" role="dialog" aria-modal="true" aria-labelledby="tipsTitle">
+    <div class="modal">
+      <header class="modal-head">
+        <h2 id="tipsTitle"><span class="emoji">⌨️</span> Shortcuts &amp; Tips</h2>
+        <button class="modal-close" id="tipsClose" type="button" aria-label="Close (Esc)">✕</button>
+      </header>
+      <div class="modal-body">
+
+        <section class="tips-section">
+          <h3>Editor &amp; code intelligence</h3>
+          <ul class="tips-list">
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Space</kbd></span><span>Completion popup — Java keywords, JDK types, snippet names, and identifiers from the current buffer. Arrow keys navigate, <kbd>Enter</kbd> inserts, <kbd>Esc</kbd> closes.</span></li>
+            <li><span class="keys"><kbd>sout</kbd> + <kbd>Tab</kbd></span><span>Expands to <code>System.out.println();</code>. Also try <code>soutv</code>, <code>serr</code>, <code>psvm</code>, <code>main</code>, <code>fori</code>, <code>foreach</code>, <code>while</code>, <code>trycatch</code>.</span></li>
+            <li><span class="keys"><kbd>▶</kbd> / <kbd>▼</kbd></span><span>Fold arrows in the gutter physically collapse a <code>{ … }</code> block into one line. Click <kbd>▶</kbd> to expand.</span></li>
+            <li><span class="keys"><kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd></span><span>Indent / outdent selected lines.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>/</kbd> / <kbd>Ctrl</kbd>+<kbd>D</kbd> / <kbd>Alt</kbd>+<kbd>↑</kbd></span><span>Comment, duplicate, move line.</span></li>
+          </ul>
+        </section>
+
+        <section class="tips-section">
+          <h3>File tree &amp; stack traces</h3>
+          <ul class="tips-list">
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>B</kbd> / 🗂️</span><span>Toggle the file tree. It shows the contents of your chosen folder. Click a <code>.java</code> file to open it in the editor.</span></li>
+            <li><span class="keys"><kbd>☕</kbd></span><span>Java source files. <code>⚙</code> marks <code>.class</code> files, <code>📁</code> folders.</span></li>
+            <li><span class="keys"><kbd>link</kbd></span><span>Stack traces like <code>at Main.main(<u>Main.java:8</u>)</code> are clickable — they open the file and jump to that line.</span></li>
+          </ul>
+        </section>
+
+        <section class="tips-section">
+          <h3>Run &amp; interact</h3>
+          <ul class="tips-list">
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span><span><strong>Run</strong> — compile and run interactively.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span><span><strong>Save &amp; Run</strong> — writes <code>java/</code> and <code>class/</code> first, then runs.</span></li>
+            <li><span class="keys"><kbd>Terminal</kbd></span><span>While a program runs, click the terminal and type. Input appears on the same line as the program's prompt.</span></li>
+            <li><span class="keys"><kbd>■ Stop</kbd></span><span>The Run button turns red while executing — click to kill.</span></li>
+          </ul>
+        </section>
+
+        <section class="tips-section">
+          <h3>CMD mode</h3>
+          <ul class="tips-list">
+            <li><span class="keys"><kbd>⌨ CMD</kbd></span><span>Folder-aware prompt. Commands act on your chosen folder.</span></li>
+            <li><span class="keys"><kbd>push</kbd></span><span>Saves the editor into <code>&lt;folder&gt;/java/</code>.</span></li>
+            <li><span class="keys"><kbd>javac</kbd></span><span><code>javac Main.java</code> → <code>&lt;folder&gt;/class/Main.class</code>.</span></li>
+            <li><span class="keys"><kbd>java</kbd></span><span><code>java Main arg1 arg2</code> — runs interactively.</span></li>
+          </ul>
+        </section>
+
+        <div class="tips-note">
+          <span class="emoji">💡</span>
+          <strong>Tip:</strong> Everything — code, folder, tree width, args, theme, font size, mode, folds, and stdin buffer — is remembered locally.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================================================================
+   *  Elements
+   * ================================================================ */
+  const editor        = document.getElementById('editor');
+  const highlight     = document.getElementById('highlight');
+  const highlightCode = document.getElementById('highlightCode');
+  const lineNumbers   = document.getElementById('lineNumbers');
+  const foldCol       = document.getElementById('foldCol');
+  const guidesTrack   = document.getElementById('guidesTrack');
+  const overlayTrack  = document.getElementById('overlayTrack');
+  const activeLine    = document.getElementById('activeLine');
+  const bracketA      = document.getElementById('bracketA');
+  const bracketB      = document.getElementById('bracketB');
+  const editorShell   = document.getElementById('editorShell');
+  const fileNameInput = document.getElementById('fileName');
+  const argsInput     = document.getElementById('argsInput');
+  const autoBadge     = document.getElementById('autoBadge');
+  const fileInput     = document.getElementById('fileInput');
+  const statusPos     = document.getElementById('statusPos');
+  const statusSel     = document.getElementById('statusSel');
+  const statusLines   = document.getElementById('statusLines');
+  const statusChars   = document.getElementById('statusChars');
+  const statusState   = document.getElementById('statusState');
+  const statusFolder  = document.getElementById('statusFolder');
+  const themeBtn      = document.getElementById('themeBtn');
+  const guidesBtn     = document.getElementById('guidesBtn');
+  const folderBtn     = document.getElementById('folderBtn');
+  const folderName    = document.getElementById('folderName');
+  const saveBtn       = document.getElementById('saveBtn');
+  const saveAsBtn     = document.getElementById('saveAsBtn');
+  const tipsBtn       = document.getElementById('tipsBtn');
+  const tipsBackdrop  = document.getElementById('tipsBackdrop');
+  const tipsClose     = document.getElementById('tipsClose');
+
+  const runBtn        = document.getElementById('runBtn');
+  const runLabel      = document.getElementById('runLabel');
+  const saveRunBtn    = document.getElementById('saveRunBtn');
+  const saveRunLabel  = document.getElementById('saveRunLabel');
+  const runStatus     = document.getElementById('runStatus');
+  const runTime       = document.getElementById('runTime');
+  const termBody      = document.getElementById('termBody');
+  const termPlaceholder = document.getElementById('termPlaceholder');
+  const termInputRow  = document.getElementById('termInputRow');
+  const termInput     = document.getElementById('termInput');
+  const clearOut      = document.getElementById('clearOut');
+  const stdinWrap     = document.getElementById('stdinWrap');
+  const stdinBox      = document.getElementById('stdinBox');
+  const inputModeTag  = document.getElementById('inputModeTag');
+  const inputHint     = document.getElementById('inputHint');
+  const workspace     = document.getElementById('workspace');
+  const sidePanel     = document.getElementById('sidePanel');
+  const splitterV     = document.getElementById('splitterV');
+  const jdkBadge      = document.getElementById('jdkBadge');
+  const jdkText       = document.getElementById('jdkText');
+  const cmdBtn        = document.getElementById('cmdBtn');
+
+  const treePanel     = document.getElementById('treePanel');
+  const treeBody      = document.getElementById('treeBody');
+  const treeBtn       = document.getElementById('treeBtn');
+  const treeRefresh   = document.getElementById('treeRefresh');
+  const splitterTree  = document.getElementById('splitterTree');
+  const acPopup       = document.getElementById('acPopup');
+
+  /* ================================================================
+   *  Constants
+   * ================================================================ */
+  const INDENT       = '  ';
+  const INDENT_UNIT  = 2;
+  const STORAGE_KEY  = 'java-web-editor.v1';
+  const DB_NAME      = 'java-web-editor';
+  const DB_STORE     = 'handles';
+  const DIR_KEY      = 'saveDirectory';
+
+  const DEFAULT_CODE =
+    'import java.util.Scanner;\n\n' +
+    'public class Main {\n' +
+    '  public static void main(String[] args) {\n' +
+    '    System.out.println("args: " + java.util.Arrays.toString(args));\n' +
+    '    Scanner sc = new Scanner(System.in);\n' +
+    '    System.out.print("What is your name? ");\n' +
+    '    String name = sc.hasNextLine() ? sc.nextLine() : "World";\n' +
+    '    System.out.println("Hello, " + name + "!");\n' +
+    '  }\n' +
+    '}';
+
+  const KEYWORDS = new Set((
+    'abstract assert boolean break byte case catch char class const continue default do double else enum ' +
+    'extends final finally float for goto if implements import instanceof int interface long native new ' +
+    'package private protected public return short static strictfp super switch synchronized this throw ' +
+    'throws transient try void volatile while var record sealed permits yield'
+  ).split(' '));
+
+  const LITERALS = new Set(['true', 'false', 'null']);
+  const OPENERS  = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'" };
+  const CLOSERS  = new Set([')', ']', '}', '"', "'"]);
+
+  const SNIPPETS = {
+    sout:    { body: 'System.out.println(|);' },
+    soutv:   { body: 'System.out.println("|");' },
+    serr:    { body: 'System.err.println(|);' },
+    psvm:    { body: 'public static void main(String[] args) {\n  |\n}' },
+    main:    { body: 'public static void main(String[] args) {\n  |\n}' },
+    fori:    { body: 'for (int i = 0; i < ; i++) {\n  |\n}' },
+    foreach: { body: 'for (var item : items) {\n  |\n}' },
+    while:   { body: 'while (condition) {\n  |\n}' },
+    trycatch:{ body: 'try {\n  |\n} catch (Exception e) {\n  e.printStackTrace();\n}' }
+  };
+
+  const COMMON_TYPES = [
+    'String', 'Integer', 'Double', 'Boolean', 'Long', 'Float', 'Short', 'Byte', 'Character',
+    'Object', 'Math', 'System', 'Scanner', 'StringBuilder', 'StringBuffer',
+    'List', 'ArrayList', 'LinkedList', 'Map', 'HashMap', 'TreeMap', 'LinkedHashMap',
+    'Set', 'HashSet', 'TreeSet', 'LinkedHashSet', 'Queue', 'Deque', 'ArrayDeque', 'Stack',
+    'Arrays', 'Collections', 'Optional', 'Stream', 'Collectors',
+    'LocalDate', 'LocalTime', 'LocalDateTime', 'Duration', 'Period', 'Instant',
+    'Exception', 'RuntimeException', 'IOException', 'IllegalArgumentException',
+    'Thread', 'Runnable', 'Callable', 'Future', 'CompletableFuture',
+    'Random', 'UUID', 'Objects', 'Comparator', 'Iterable', 'Iterator',
+    'BigInteger', 'BigDecimal', 'Pattern', 'Matcher', 'Files', 'Path', 'Paths'
+  ];
+
+  const TOKEN_RE = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b(?:0[xX][0-9a-fA-F_]+|\d[\d_]*(?:\.[\d_]+)?(?:[eE][+-]?\d+)?)[fFdDlL]?\b)|(@[A-Za-z_$][\w$]*)|([A-Za-z_$][\w$]*)/g;
+
+  const CAN_PICK_DIR  = typeof window.showDirectoryPicker === 'function';
+  const CAN_PICK_FILE = typeof window.showSaveFilePicker === 'function';
+
+  /* ================================================================
+   *  State
+   * ================================================================ */
+  const state = { fontSize: 15, theme: 'dark', guides: true };
+  let dirHandle = null;
+  let dirNeedsPermission = false;
+  let lastSavedText = null;
+  let userEditedFileName = false;
+  let running = false;
+  let cmdMode = false;
+  let activeWs = null;
+  let termLine = null;
+  let treeVisible = false;
+  let treeBasis = 240;
+
+  /* fold state */
+  const foldRegistry = new Map();
+  let foldCounter = 0;
+
+  /* autocomplete state */
+  let acVisible = false;
+  let acItems = [];
+  let acIndex = 0;
+  let acPrefixStart = 0;
+
+  /* ================================================================
+   *  Args tokenizer
+   * ================================================================ */
+  function parseArgs(str) {
+    const out = [];
+    let cur = '';
+    let quote = null;
+    let has = false;
+    for (let i = 0; i < str.length; i++) {
+      const c = str[i];
+      if (quote) {
+        if (c === quote) quote = null;
+        else cur += c;
+      } else if (c === '"' || c === "'") {
+        quote = c; has = true;
+      } else if (/\s/.test(c)) {
+        if (cur || has) { out.push(cur); cur = ''; has = false; }
+      } else {
+        cur += c;
+      }
+    }
+    if (cur || has) out.push(cur);
+    return out;
+  }
+
+  /* ================================================================
+   *  Class / package detection
+   * ================================================================ */
+  const PUBLIC_TYPE_RE =
+    /\bpublic\s+(?:final\s+|abstract\s+|sealed\s+|non-sealed\s+|strictfp\s+)*(?:class|interface|enum|record)\s+([A-Za-z_$][\w$]*)/;
+  const ANY_TYPE_RE =
+    /\b(?:class|interface|enum|record)\s+([A-Za-z_$][\w$]*)/;
+
+  function stripNoise(code) {
+    return code
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/\/\/[^\n]*/g, ' ')
+      .replace(/"(?:\\.|[^"\\\n])*"/g, '""')
+      .replace(/'(?:\\.|[^'\\\n])*'/g, "''");
+  }
+  function detectMainClassName(code) {
+    const s = stripNoise(code);
+    const pub = s.match(PUBLIC_TYPE_RE);
+    if (pub) return pub[1];
+    const any = s.match(ANY_TYPE_RE);
+    return any ? any[1] : null;
+  }
+  function detectPackageName(code) {
+    const s = stripNoise(code);
+    const m = s.match(/\bpackage\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*;/);
+    return m ? m[1] : null;
+  }
+  function syncFileNameFromCode() {
+    updateAutoBadge();
+    if (userEditedFileName) return;
+    const detected = detectMainClassName(getFullSource());
+    if (detected && fileNameInput.value !== detected) {
+      fileNameInput.value = detected;
+      saveSoon();
+    }
+  }
+  function updateAutoBadge() { autoBadge.hidden = userEditedFileName; }
+
+  /* ================================================================
+   *  Terminal
+   * ================================================================ */
+  function hidePlaceholder() { termPlaceholder.style.display = 'none'; }
+  function showPlaceholder() { termPlaceholder.style.display = ''; }
+
+  function clearTerm() {
+    Array.from(termBody.children).forEach(el => {
+      if (el !== termPlaceholder && el !== termInputRow) el.remove();
+    });
+    termLine = null;
+    showPlaceholder();
+  }
+
+  function decorateStackTraceLine(el) {
+    if (!el || el.dataset.decorated) return;
+    const text = el.textContent;
+    const re = /\bat\s+([\w.$]+)\(([\w$]+\.java):(\d+)\)/g;
+    if (!re.test(text)) return;
+    el.dataset.decorated = '1';
+    re.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      frag.appendChild(document.createTextNode('at ' + m[1] + '('));
+      const link = document.createElement('span');
+      link.className = 'stack-link';
+      link.textContent = m[2] + ':' + m[3];
+      link.title = 'Open ' + m[2] + ' at line ' + m[3];
+      const fileName = m[2];
+      const lineNo   = parseInt(m[3], 10);
+      link.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        navigateToFileLine(fileName, lineNo);
+      });
+      frag.appendChild(link);
+      frag.appendChild(document.createTextNode(')'));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    el.replaceChildren(frag);
+  }
+
+  function termWrite(text, cls) {
+    if (!text) return;
+    hidePlaceholder();
+    const parts = String(text).split('\n');
+    for (let i = 0; i < parts.length; i++) {
+      if (i > 0) {
+        if (termLine) {
+          if (termLine.classList.contains('stderr') || termLine.classList.contains('stdout')) {
+            decorateStackTraceLine(termLine);
+          }
+          termLine = null;
+        } else {
+          termBody.insertBefore(document.createElement('br'), termInputRow);
+        }
+      }
+      const part = parts[i];
+      if (part === '') continue;
+      if (!termLine) {
+        termLine = document.createElement('span');
+        termLine.className = 'line ' + (cls || 'stdout');
+        termBody.insertBefore(termLine, termInputRow);
+      }
+      termLine.textContent += part;
+    }
+    termBody.scrollTop = termBody.scrollHeight;
+  }
+  function writeLine(text, cls) { termWrite((text || '') + '\n', cls); }
+  function scrollTerm() { termBody.scrollTop = termBody.scrollHeight; }
+  function setRunStatus(kind, label) { runStatus.className = 'pill ' + (kind || ''); runStatus.textContent = label; }
+
+  function showTermInput() {
+    termInputRow.classList.add('show');
+    setTimeout(() => { try { termInput.focus(); } catch (_) {} }, 60);
+  }
+  function hideTermInput() {
+    termInputRow.classList.remove('show');
+    termInput.value = '';
+    termInput.blur();
+  }
+
+  termInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const line = termInput.value;
+    termInput.value = '';
+    termWrite(line, 'echo');
+    termWrite('\n', 'stdout');
+    if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+      try { activeWs.send(JSON.stringify({ type: 'input', data: line + '\n' })); } catch (_) {}
+    }
+  });
+  termBody.addEventListener('click', (e) => {
+    if (e.target === termInput) return;
+    if (running && termInputRow.classList.contains('show')) {
+      try { termInput.focus(); } catch (_) {}
+    }
+  });
+
+  /* ================================================================
+   *  JDK health check
+   * ================================================================ */
+  async function checkJdk() {
+    try {
+      const r = await fetch('/api/health');
+      const d = await r.json();
+      if (d.ok) {
+        jdkBadge.className = 'jdk-badge ok';
+        jdkText.textContent = 'JDK ready';
+        jdkBadge.title = `${d.java || ''}\n${d.javac || ''}`.trim();
+      } else {
+        jdkBadge.className = 'jdk-badge bad';
+        jdkText.textContent = 'JDK not found';
+        jdkBadge.title = (d.hints && (d.hints.javac || d.hints.java)) || 'Install a JDK and restart the server.';
+      }
+    } catch (_) {
+      jdkBadge.className = 'jdk-badge bad';
+      jdkText.textContent = 'server offline';
+      jdkBadge.title = 'The Node.js server is not responding.';
+    }
+  }
+
+  /* ================================================================
+   *  Base64
+   * ================================================================ */
+  function base64ToBytes(b64) {
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function bytesToBase64(bytes) {
+    let bin = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(bin);
+  }
+
+  /* ================================================================
+   *  Folder helpers
+   * ================================================================ */
+  async function ensureDirChain(root, parts) {
+    let dir = root;
+    for (const p of parts) dir = await dir.getDirectoryHandle(p, { create: true });
+    return dir;
+  }
+  async function writeTextAtPath(root, relPath, text) {
+    const parts = relPath.split('/');
+    const fname = parts.pop();
+    const dir   = await ensureDirChain(root, parts);
+    const fh    = await dir.getFileHandle(fname, { create: true });
+    const w     = await fh.createWritable();
+    await w.write(text);
+    await w.close();
+  }
+  async function writeBinaryAtPath(root, relPath, bytes) {
+    const parts = relPath.split('/');
+    const fname = parts.pop();
+    const dir   = await ensureDirChain(root, parts);
+    const fh    = await dir.getFileHandle(fname, { create: true });
+    const w     = await fh.createWritable();
+    await w.write(bytes);
+    await w.close();
+  }
+  async function persistArtifacts(data, code) {
+    const className = data.className || detectMainClassName(code) || 'Main';
+    const pkg       = data.packageName || null;
+    const pkgPath   = pkg ? pkg.split('.').join('/') + '/' : '';
+
+    const javaDir  = await dirHandle.getDirectoryHandle('java',  { create: true });
+    const classDir = await dirHandle.getDirectoryHandle('class', { create: true });
+
+    const javaRel = pkgPath + className + '.java';
+    await writeTextAtPath(javaDir, javaRel, code);
+    termWrite('✓ Saved  java/' + javaRel + '\n', 'ok');
+
+    const files = Array.isArray(data.classFiles) ? data.classFiles : [];
+    for (const cf of files) {
+      await writeBinaryAtPath(classDir, cf.name, base64ToBytes(cf.data));
+      termWrite('✓ Saved  class/' + cf.name + '\n', 'ok');
+    }
+    if (files.length === 0) {
+      termWrite('(no .class files — compilation did not complete)\n', 'meta');
+    }
+    if (treeVisible) buildTree();
+  }
+
+  /* ================================================================
+   *  File tree
+   * ================================================================ */
+  async function buildTree() {
+    treeBody.replaceChildren();
+    if (!dirHandle) {
+      const d = document.createElement('div');
+      d.className = 'tree-empty';
+      d.textContent = 'Select a folder with 📁 to see files here.';
+      treeBody.appendChild(d);
+      return;
+    }
+    try {
+      const children = await listTreeChildren(dirHandle, '');
+      for (const c of children) treeBody.appendChild(c);
+    } catch (e) {
+      const d = document.createElement('div');
+      d.className = 'tree-empty';
+      d.textContent = 'Could not read folder: ' + e.message;
+      treeBody.appendChild(d);
+    }
+  }
+
+  async function listTreeChildren(dir, relPath) {
+    const entries = [];
+    for await (const [name, handle] of dir.entries()) {
+      entries.push({ name, handle });
+    }
+    entries.sort((a, b) => {
+      const ad = a.handle.kind === 'directory' ? 0 : 1;
+      const bd = b.handle.kind === 'directory' ? 0 : 1;
+      if (ad !== bd) return ad - bd;
+      return a.name.localeCompare(b.name);
+    });
+    const nodes = [];
+    for (const e of entries) nodes.push(await buildTreeItem(e.name, e.handle, relPath));
+    return nodes;
+  }
+
+  async function buildTreeItem(name, handle, parentPath) {
+    const fullPath = parentPath ? parentPath + '/' + name : name;
+    const isDir = handle.kind === 'directory';
+    const depth = fullPath.split('/').length - 1;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'tree-node';
+
+    const row = document.createElement('div');
+    row.className = 'tree-row';
+    row.dataset.path = fullPath;
+    row.style.paddingLeft = (4 + depth * 12) + 'px';
+
+    const toggle = document.createElement('span');
+    toggle.className = 'tree-toggle';
+    toggle.textContent = isDir ? '▶' : '';
+    row.appendChild(toggle);
+
+    const icon = document.createElement('span');
+    icon.className = 'tree-icon';
+    if (isDir) icon.textContent = '📁';
+    else if (name.endsWith('.java')) icon.textContent = '☕';
+    else if (name.endsWith('.class')) icon.textContent = '⚙';
+    else icon.textContent = '📄';
+    row.appendChild(icon);
+
+    const label = document.createElement('span');
+    label.className = 'tree-name';
+    label.textContent = name;
+    row.appendChild(label);
+
+    wrap.appendChild(row);
+
+    if (isDir) {
+      const childBox = document.createElement('div');
+      childBox.className = 'tree-children';
+      childBox.style.display = 'none';
+      wrap.appendChild(childBox);
+
+      let loaded = false;
+      const loadChildren = async () => {
+        if (loaded) return;
+        loaded = true;
+        try {
+          const children = await listTreeChildren(handle, fullPath);
+          for (const c of children) childBox.appendChild(c);
+        } catch (e) {
+          const err = document.createElement('div');
+          err.className = 'tree-empty';
+          err.style.paddingLeft = (4 + (depth + 1) * 12) + 'px';
+          err.textContent = '⚠ ' + e.message;
+          childBox.appendChild(err);
+        }
+      };
+
+      const toggleOpen = async (ev) => {
+        if (ev) ev.stopPropagation();
+        const open = childBox.style.display !== 'none';
+        if (open) {
+          childBox.style.display = 'none';
+          toggle.textContent = '▶';
+          return;
+        }
+        toggle.textContent = '▼';
+        await loadChildren();
+        childBox.style.display = 'block';
+      };
+      toggle.addEventListener('click', toggleOpen);
+      row.addEventListener('click', () => toggleOpen());
+    } else {
+      row.addEventListener('click', () => {
+        treeBody.querySelectorAll('.tree-row.active').forEach(el => el.classList.remove('active'));
+        row.classList.add('active');
+        if (name.endsWith('.java')) {
+          openTreeFile(fullPath);
+        } else {
+          setStateMessage(name + ' is not a Java source file.', 'error');
+        }
+      });
+    }
+
+    return wrap;
+  }
+
+  async function openTreeFile(relPath) {
+    try {
+      const text = await readFolderFile(relPath);
+      foldRegistry.clear();
+      editor.value = text.replace(/\r\n?/g, '\n');
+      userEditedFileName = true;
+      const baseName = relPath.split('/').pop().replace(/\.java$/i, '');
+      fileNameInput.value = baseName || 'Main';
+      editor.focus();
+      editor.setSelectionRange(0, 0);
+      editor.scrollTop = 0;
+      markSaved();
+      queueRender();
+      saveState();
+      setStateMessage('Opened ' + relPath, 'saved');
+    } catch (e) {
+      setStateMessage('Could not open ' + relPath + ': ' + e.message, 'error');
+    }
+  }
+
+  function toggleTree(force) {
+    treeVisible = force != null ? force : !treeVisible;
+    treePanel.classList.toggle('hidden', !treeVisible);
+    splitterTree.classList.toggle('hidden', !treeVisible);
+    treeBtn.classList.toggle('on', treeVisible);
+    if (treeVisible) {
+      treePanel.style.flexBasis = treeBasis + 'px';
+      buildTree();
+    }
+    saveState();
+    queueRender();
+  }
+
+  treeBtn.addEventListener('click', () => toggleTree());
+  treeRefresh.addEventListener('click', () => buildTree());
+
+  (function () {
+    let dragging = false;
+    const onDown = e => {
+      dragging = true;
+      document.body.classList.add('resizing-tree');
+      try { splitterTree.setPointerCapture(e.pointerId); } catch (_) {}
+      e.preventDefault();
+    };
+    const onMove = e => {
+      if (!dragging) return;
+      const r = workspace.getBoundingClientRect();
+      const desired = e.clientX - r.left;
+      const clamped = Math.max(140, Math.min(500, desired));
+      treeBasis = clamped;
+      treePanel.style.flexBasis = clamped + 'px';
+    };
+    const onUp = e => {
+      if (!dragging) return;
+      dragging = false;
+      document.body.classList.remove('resizing-tree');
+      try { splitterTree.releasePointerCapture(e.pointerId); } catch (_) {}
+      saveState();
+    };
+    splitterTree.addEventListener('pointerdown', onDown);
+    splitterTree.addEventListener('pointermove', onMove);
+    splitterTree.addEventListener('pointerup', onUp);
+    splitterTree.addEventListener('pointercancel', onUp);
+  })();
+
+  /* ================================================================
+   *  Stack-trace navigation
+   * ================================================================ */
+  async function findFileInFolder(root, relPath) {
+    const parts = relPath.split('/');
+    let dir = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      try { dir = await dir.getDirectoryHandle(parts[i]); } catch { return null; }
+    }
+    try { return await dir.getFileHandle(parts[parts.length - 1]); } catch { return null; }
+  }
+
+  async function navigateToFileLine(fileName, lineNo) {
+    if (!dirHandle) { setStateMessage('No folder selected.', 'error'); return; }
+    let fh = await findFileInFolder(dirHandle, 'java/' + fileName);
+    if (!fh) fh = await findFileInFolder(dirHandle, fileName);
+    if (!fh) { setStateMessage('Could not find ' + fileName + ' in your folder.', 'error'); return; }
+    try {
+      const f = await fh.getFile();
+      const text = await f.text();
+      foldRegistry.clear();
+      editor.value = text.replace(/\r\n?/g, '\n');
+      userEditedFileName = true;
+      fileNameInput.value = fileName.replace(/\.java$/i, '');
+      markSaved();
+      queueRender();
+      jumpToLine(lineNo);
+      setStateMessage('Opened ' + fileName + ':' + lineNo, 'saved');
+    } catch (e) {
+      setStateMessage('Could not open ' + fileName + ': ' + e.message, 'error');
+    }
+  }
+
+  /* ================================================================
+   *  Masking (used by folding, bracket match, identifiers)
+   * ================================================================ */
+  let maskCacheSrc = null;
+  let maskCache    = '';
+
+  function maskCode(code) {
+    return code
+      /* Blank whole lines that carry a fold marker, so any `{` or `}` in the
+         rendered placeholder never confuses the brace scanner. */
+      .replace(/^.*\/\*@[A-Za-z0-9_]+@\*\/.*$/gm, m => ' '.repeat(m.length))
+      .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+      .replace(/\/\/[^\n]*/g,        m => ' '.repeat(m.length))
+      .replace(/"(?:\\.|[^"\\\n])*"/g, m => ' '.repeat(m.length))
+      .replace(/'(?:\\.|[^'\\\n])*'/g, m => ' '.repeat(m.length));
+  }  function getMaskedSrc() {
+    const v = editor.value;
+    if (maskCacheSrc === v) return maskCache;
+    maskCacheSrc = v;
+    maskCache = maskCode(v);
+    return maskCache;
+  }
+
+  /* ================================================================
+   *  Folding
+   *
+   *  Fold markers look like:
+   *      //@FOLD@<id>@  N lines
+   *  The original lines live in foldRegistry[id]. getFullSource()
+   *  expands them recursively, so nested folds work.
+   * ================================================================ */
+  function newFoldId() {
+    foldCounter++;
+    const r = Math.random().toString(36).slice(2, 8) || '0';
+    return 'f' + foldCounter.toString(36) + '_' + r;
+  }
+
+  function getFoldId(line) {
+    if (!line) return null;
+    /* The marker is a trailing inline comment: ... /*@<id>@*\/ */
+    const m = line.match(/\/\*@([A-Za-z0-9_]+)@\*\/\s*$/);
+    if (!m) return null;
+    return foldRegistry.has(m[1]) ? m[1] : null;
+  }
+
+  let _braceSrc = null, _braceMap = null;
+  function getBraceMap(src) {
+    if (_braceSrc === src) return _braceMap;
+    const masked = maskCode(src).split('\n');
+    const stack = [];
+    const map = new Map();
+    for (let i = 0; i < masked.length; i++) {
+      const line = masked[i] || '';
+      for (let j = 0; j < line.length; j++) {
+        const ch = line[j];
+        if (ch === '{') stack.push(i);
+        else if (ch === '}') {
+          const open = stack.pop();
+          if (open !== undefined && i - open > 1 && !map.has(open)) {
+            map.set(open, i);
+          }
+        }
+      }
+    }
+    _braceSrc = src;
+    _braceMap = map;
+    return map;
+  }
+
+  /** Builds the visible one-line summary for a folded block, e.g.
+   *    "  public class Main { … }  /*@f1_a3b4c5@*\/"
+   *  The marker at the end is what getFoldId() uses to find the entry in
+   *  foldRegistry. The middle part is purely for humans. */
+  function makeFoldPlaceholder(startLineText, id) {
+    const indent = (startLineText.match(/^[ \t]*/) || [''])[0];
+    let decl = startLineText.slice(indent.length).replace(/\/\/.*$/, '').trim();
+
+    const brace = decl.indexOf('{');
+    if (brace >= 0) decl = decl.slice(0, brace + 1);
+    else            decl += ' {';
+
+    if (decl.length > 64) decl = decl.slice(0, 61) + '…';
+
+    return indent + decl + ' … }  /*@' + id + '@*/';
+  }
+  
+  function applyFold(startLine) {
+    const view = editor.value;
+    const braceMap = getBraceMap(view);
+    const endLine = braceMap.get(startLine);
+    if (endLine == null) return;
+
+    const lines  = view.split('\n');
+    const folded = lines.slice(startLine, endLine + 1);
+
+    const id = newFoldId();
+    foldRegistry.set(id, folded);
+
+    const placeholder = makeFoldPlaceholder(lines[startLine], id);
+
+    const newLines = lines.slice(0, startLine)
+      .concat([placeholder])
+      .concat(lines.slice(endLine + 1));
+
+    editor.value = newLines.join('\n');
+
+    let offset = 0;
+    for (let i = 0; i < startLine; i++) offset += newLines[i].length + 1;
+    offset += placeholder.length;
+    editor.focus();
+    editor.setSelectionRange(offset, offset);
+
+    _braceSrc = null;
+    maskCacheSrc = null;
+    queueRender();
+    saveSoon();
+    refreshDirty();
+  }
+
+  function removeFold(id) {
+    const stored = foldRegistry.get(id);
+    if (!stored) return;
+
+    const lines = editor.value.split('\n');
+    let idx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (getFoldId(lines[i]) === id) { idx = i; break; }
+    }
+    if (idx === -1) { foldRegistry.delete(id); return; }
+
+    const newLines = lines.slice(0, idx)
+      .concat(stored)
+      .concat(lines.slice(idx + 1));
+
+    editor.value = newLines.join('\n');
+    foldRegistry.delete(id);
+
+    let offset = 0;
+    for (let i = 0; i < idx; i++) offset += newLines[i].length + 1;
+    editor.focus();
+    editor.setSelectionRange(offset, offset);
+
+    _braceSrc = null;
+    maskCacheSrc = null;
+    queueRender();
+    saveSoon();
+    refreshDirty();
+  }
+
+  function getFullSource() {
+    if (foldRegistry.size === 0) return editor.value;
+
+    let text = editor.value;
+    for (let pass = 0; pass < 32; pass++) {
+      const lines = text.split('\n');
+      const out = [];
+      let changed = false;
+      for (const line of lines) {
+        const id = getFoldId(line);
+        if (id) {
+          const stored = foldRegistry.get(id);
+          if (stored) {
+            for (const s of stored) out.push(s);
+            changed = true;
+            continue;
+          }
+        }
+        out.push(line);
+      }
+      if (!changed) break;
+      const next = out.join('\n');
+      if (next === text) break;
+      text = next;
+    }
+    return text;
+  }
+
+  function computeLineLabels() {
+    const lines  = editor.value.split('\n');
+    const labels = [];
+    let full = 1;
+    for (const line of lines) {
+      labels.push(full);
+      const id = getFoldId(line);
+      if (id) full += foldRegistry.get(id).length;
+      else    full += 1;
+    }
+    return labels;
+  }
+
+  function renderFoldColumn() {
+    const view = editor.value;
+    const lines = view.split('\n');
+    const braceMap = getBraceMap(view);
+    const frag = document.createDocumentFragment();
+
+    for (let i = 0; i < lines.length; i++) {
+      const d = document.createElement('div');
+      const id = getFoldId(lines[i]);
+
+      if (id) {
+        d.className = 'foldable';
+        d.textContent = '▶';
+        d.title = 'Expand folded block';
+        const captured = id;
+        d.addEventListener('mousedown', (ev) => {
+          ev.preventDefault(); ev.stopPropagation();
+          removeFold(captured);
+        });
+      } else if (braceMap.has(i)) {
+        d.className = 'foldable';
+        d.textContent = '▼';
+        d.title = 'Fold block';
+        const captured = i;
+        d.addEventListener('mousedown', (ev) => {
+          ev.preventDefault(); ev.stopPropagation();
+          applyFold(captured);
+        });
+      }
+      frag.appendChild(d);
+    }
+    foldCol.replaceChildren(frag);
+  }
+
+  function jumpToLine(fullLineNo) {
+    const lines  = editor.value.split('\n');
+    const labels = computeLineLabels();
+
+    let viewIdx = 0;
+    for (let i = 0; i < labels.length; i++) {
+      if (labels[i] === fullLineNo) { viewIdx = i; break; }
+      if (labels[i] >  fullLineNo)  { viewIdx = Math.max(0, i - 1); break; }
+      viewIdx = i;
+    }
+
+    let offset = 0;
+    for (let i = 0; i < viewIdx; i++) offset += lines[i].length + 1;
+    editor.focus();
+    editor.setSelectionRange(offset, offset);
+
+    const cs = getComputedStyle(editor);
+    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const padY = parseFloat(cs.paddingTop) || 0;
+    const target = padY + viewIdx * lineHeight;
+    editor.scrollTop = Math.max(0, target - editor.clientHeight / 2);
+    syncScroll();
+    updateStatus();
+    updateOverlays();
+  }
+
+  /* ================================================================
+   *  Autocomplete
+   * ================================================================ */
+  function collectBufferIdentifiers(src) {
+    const set = new Set();
+    const masked = maskCode(src);
+    const re = /\b([A-Z][A-Za-z0-9_$]*)\b/g;
+    let m;
+    while ((m = re.exec(masked)) !== null) {
+      if (m[1].length < 2) continue;
+      set.add(m[1]);
+      if (set.size > 200) break;
+    }
+    return [...set];
+  }
+
+  function buildSuggestions(prefix) {
+    const items = [];
+    const seen = new Set();
+    const p = prefix.toLowerCase();
+    const add = (label, kind) => {
+      if (seen.has(label)) return;
+      if (p && !label.toLowerCase().startsWith(p)) return;
+      seen.add(label);
+      items.push({ label, kind });
+    };
+
+    for (const k of KEYWORDS) add(k, 'kw');
+    for (const t of COMMON_TYPES) add(t, 'type');
+    for (const s of Object.keys(SNIPPETS)) add(s, 'snip');
+    for (const id of collectBufferIdentifiers(editor.value)) add(id, 'id');
+
+    return items.slice(0, 40);
+  }
+
+  function positionAC() {
+    const cs = getComputedStyle(editor);
+    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const padY = parseFloat(cs.paddingTop) || 0;
+    const padX = parseFloat(cs.paddingLeft) || 0;
+    const charWidth = getCharWidth();
+
+    const v = editor.value;
+    const s = editor.selectionStart;
+    const before = v.slice(0, s);
+    const lineIdx = before.split('\n').length - 1;
+    const col = s - (before.lastIndexOf('\n') + 1);
+
+    const rect = editor.getBoundingClientRect();
+    let top  = rect.top + padY + (lineIdx + 1) * lineHeight - editor.scrollTop;
+    let left = rect.left + padX + col * charWidth - editor.scrollLeft;
+
+    const popW = acPopup.offsetWidth || 240;
+    const popH = acPopup.offsetHeight || 240;
+    if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+    if (top + popH > window.innerHeight - 8)  top  = top - lineHeight - popH;
+
+    acPopup.style.top = Math.max(4, top) + 'px';
+    acPopup.style.left = Math.max(4, left) + 'px';
+  }
+
+  function renderAC() {
+    acPopup.replaceChildren();
+    acItems.forEach((it, i) => {
+      const div = document.createElement('div');
+      div.className = 'ac-item' + (i === acIndex ? ' selected' : '');
+      const kind = document.createElement('span');
+      kind.className = 'ac-kind';
+      kind.textContent = it.kind;
+      const label = document.createElement('span');
+      label.className = 'ac-label';
+      label.textContent = it.label;
+      div.appendChild(kind);
+      div.appendChild(label);
+      div.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        acceptAC(it.label);
+      });
+      acPopup.appendChild(div);
+    });
+    const sel = acPopup.querySelector('.ac-item.selected');
+    if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest' });
+  }
+
+  function openAC() {
+    const v = editor.value;
+    const s = editor.selectionStart;
+    const before = v.slice(0, s);
+    const m = before.match(/[A-Za-z_$][\w$]*$/);
+    const prefix = m ? m[0] : '';
+    acPrefixStart = s - prefix.length;
+
+    acItems = buildSuggestions(prefix);
+    if (acItems.length === 0) return;
+    acIndex = 0;
+    acVisible = true;
+    renderAC();
+    positionAC();
+    acPopup.hidden = false;
+  }
+
+  function closeAC() {
+    acVisible = false;
+    acPopup.hidden = true;
+    acPopup.replaceChildren();
+    acItems = [];
+  }
+
+  function acceptAC(label) {
+    const s = editor.selectionStart;
+    const en = editor.selectionEnd;
+    applyEdit(acPrefixStart, en, label, acPrefixStart + label.length);
+    closeAC();
+  }
+
+  function refreshAC() {
+    if (!acVisible) return;
+    const v = editor.value;
+    const s = editor.selectionStart;
+    const before = v.slice(0, s);
+    const m = before.match(/[A-Za-z_$][\w$]*$/);
+    const prefix = m ? m[0] : '';
+    acItems = buildSuggestions(prefix);
+    acIndex = 0;
+    if (acItems.length === 0) { closeAC(); return; }
+    renderAC();
+    positionAC();
+  }
+
+  /* ================================================================
+   *  Snippets
+   * ================================================================ */
+  function insertSnippet(start, end, body) {
+    const caret = body.indexOf('|');
+    const clean = caret >= 0 ? body.replace('|', '') : body;
+    const newPos = caret >= 0 ? start + caret : start + clean.length;
+    applyEdit(start, end, clean, newPos, newPos);
+  }
+
+  function trySnippet() {
+    const val = editor.value;
+    const s = editor.selectionStart;
+    const en = editor.selectionEnd;
+    if (s !== en) return false;
+
+    const before = val.slice(0, s);
+    const m = before.match(/[A-Za-z_$][\w$]*$/);
+    if (!m) return false;
+    const word = m[0];
+    const snip = SNIPPETS[word];
+    if (!snip) return false;
+
+    const start = s - word.length;
+    insertSnippet(start, s, snip.body);
+    return true;
+  }
+
+  /* ================================================================
+   *  Cursor decorations
+   * ================================================================ */
+  const OPEN_BR  = { '(': ')', '[': ']', '{': '}' };
+  const CLOSE_BR = { ')': '(', ']': '[', '}': '{' };
+
+  function matchForward(v, start, open, close) {
+    let depth = 0;
+    for (let i = start; i < v.length; i++) {
+      if (v[i] === open) depth++;
+      else if (v[i] === close) { depth--; if (depth === 0) return i; }
+    }
+    return -1;
+  }
+  function matchBackward(v, start, open, close) {
+    let depth = 0;
+    for (let i = start; i >= 0; i--) {
+      if (v[i] === close) depth++;
+      else if (v[i] === open) { depth--; if (depth === 0) return i; }
+    }
+    return -1;
+  }
+  function findBracketMatch(s) {
+    const v = getMaskedSrc();
+    let idx = -1, ch = null;
+    if (s > 0 && (OPEN_BR[v[s - 1]] || CLOSE_BR[v[s - 1]])) { idx = s - 1; ch = v[s - 1]; }
+    else if (s < v.length && (OPEN_BR[v[s]] || CLOSE_BR[v[s]])) { idx = s; ch = v[s]; }
+    else return null;
+    if (OPEN_BR[ch]) {
+      const close = matchForward(v, idx, ch, OPEN_BR[ch]);
+      return close === -1 ? null : { open: idx, close };
+    } else {
+      const open = matchBackward(v, idx, CLOSE_BR[ch], ch);
+      return open === -1 ? null : { open, close: idx };
+    }
+  }
+  function indexToLineCol(v, idx) {
+    const before = v.slice(0, idx);
+    return { line: before.split('\n').length - 1, col: idx - (before.lastIndexOf('\n') + 1) };
+  }
+  function computeActiveGuideCol() {
+    const v = editor.value;
+    const s = editor.selectionStart;
+    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = v.indexOf('\n', s);
+    if (lineEnd === -1) lineEnd = v.length;
+    const line = v.slice(lineStart, lineEnd);
+    const lead = (line.match(/^[ \t]*/) || [''])[0];
+    let count = 0;
+    for (const ch of lead) count += ch === '\t' ? INDENT_UNIT : 1;
+    if (count === 0) return -1;
+    const unit = detectIndentUnit(v.split('\n'));
+    return Math.floor((count - 1) / unit);
+  }
+
+  function updateOverlays() {
+    const v = editor.value;
+    const s = editor.selectionStart;
+
+    const cs = getComputedStyle(editor);
+    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const padY = parseFloat(cs.paddingTop) || 0;
+    const padX = parseFloat(cs.paddingLeft) || 0;
+    const charWidth = getCharWidth();
+
+    const before = v.slice(0, s);
+    const lineIdx = before.split('\n').length - 1;
+    activeLine.style.display = 'block';
+    activeLine.style.top     = (padY + lineIdx * lineHeight) + 'px';
+    activeLine.style.height  = lineHeight + 'px';
+
+    const m = findBracketMatch(s);
+    if (m) {
+      const a = indexToLineCol(v, m.open);
+      const b = indexToLineCol(v, m.close);
+      bracketA.style.display = 'block';
+      bracketA.style.left    = (padX + a.col * charWidth - 1) + 'px';
+      bracketA.style.top     = (padY + a.line * lineHeight) + 'px';
+      bracketA.style.width   = (charWidth + 2) + 'px';
+      bracketA.style.height  = lineHeight + 'px';
+      bracketB.style.display = 'block';
+      bracketB.style.left    = (padX + b.col * charWidth - 1) + 'px';
+      bracketB.style.top     = (padY + b.line * lineHeight) + 'px';
+      bracketB.style.width   = (charWidth + 2) + 'px';
+      bracketB.style.height  = lineHeight + 'px';
+    } else {
+      bracketA.style.display = 'none';
+      bracketB.style.display = 'none';
+    }
+
+    const activeCol = computeActiveGuideCol();
+    const guides = guidesTrack.children;
+    for (let i = 0; i < guides.length; i++) {
+      const el = guides[i];
+      const c = parseInt(el.dataset.col, 10);
+      el.classList.toggle('active', c === activeCol);
+    }
+  }
+
+  /* ================================================================
+   *  Cheat-sheet modal
+   * ================================================================ */
+  let lastFocusBeforeTips = null;
+  function openTips() {
+    if (tipsBackdrop.classList.contains('open')) return;
+    lastFocusBeforeTips = document.activeElement;
+    tipsBackdrop.classList.add('open');
+    setTimeout(() => tipsClose.focus(), 40);
+  }
+  function closeTips() {
+    if (!tipsBackdrop.classList.contains('open')) return;
+    tipsBackdrop.classList.remove('open');
+    setTimeout(() => {
+      const target = (lastFocusBeforeTips && document.contains(lastFocusBeforeTips)) ? lastFocusBeforeTips : editor;
+      target.focus();
+    }, 180);
+  }
+  tipsBtn.addEventListener('click', openTips);
+  tipsClose.addEventListener('click', closeTips);
+  tipsBackdrop.addEventListener('click', e => { if (e.target === tipsBackdrop) closeTips(); });
+
+  /* ================================================================
+   *  IndexedDB
+   * ================================================================ */
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = () => reject(req.error);
+    });
+  }
+  function idbSet(key, value) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).put(value, key);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror    = () => { db.close(); reject(tx.error); };
+    }));
+  }
+  function idbGet(key) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, 'readonly');
+      const req = tx.objectStore(DB_STORE).get(key);
+      req.onsuccess = () => { db.close(); resolve(req.result); };
+      req.onerror   = () => { db.close(); reject(req.error); };
+    }));
+  }
+  function idbDelete(key) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).delete(key);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror    = () => { db.close(); reject(tx.error); };
+    })).catch(() => {});
+  }
+
+  /* ================================================================
+   *  Folder handling
+   * ================================================================ */
+  const PERM_OPTS = { mode: 'readwrite' };
+  async function hasPermission(handle) {
+    if (!handle || typeof handle.queryPermission !== 'function') return false;
+    try { return (await handle.queryPermission(PERM_OPTS)) === 'granted'; }
+    catch (_) { return false; }
+  }
+  async function ensurePermission(handle) {
+    if (!handle) return false;
+    if (await hasPermission(handle)) return true;
+    if (typeof handle.requestPermission !== 'function') return false;
+    try { return (await handle.requestPermission(PERM_OPTS)) === 'granted'; }
+    catch (_) { return false; }
+  }
+  function updateFolderUI() {
+    if (dirHandle) {
+      folderName.textContent = dirHandle.name;
+      folderBtn.classList.remove('unset');
+      folderBtn.title = 'Save folder: ' + dirHandle.name + '\nClick to change';
+      statusFolder.textContent = '📁 ' + dirHandle.name;
+      folderBtn.classList.toggle('attention', dirNeedsPermission);
+    } else {
+      folderName.textContent = CAN_PICK_DIR ? 'No folder' : 'Unsupported';
+      folderBtn.classList.add('unset');
+      folderBtn.title = CAN_PICK_DIR
+        ? 'Choose the folder where files will be saved'
+        : 'Your browser does not support folder saving — files will download normally';
+      statusFolder.textContent = '';
+      folderBtn.classList.remove('attention');
+      if (!CAN_PICK_DIR) folderBtn.disabled = true;
+    }
+  }
+  async function chooseFolder() {
+    if (!CAN_PICK_DIR) { setStateMessage('Folder picking is not supported in this browser', 'error'); return false; }
+    let handle;
+    try {
+      handle = await window.showDirectoryPicker({
+        id: 'java-web-editor-folder',
+        mode: 'readwrite',
+        startIn: dirHandle || 'documents'
+      });
+    } catch (err) {
+      if (err && err.name === 'AbortError') return false;
+      setStateMessage('Could not open the folder picker', 'error');
+      return false;
+    }
+    if (!await ensurePermission(handle)) {
+      setStateMessage('Write permission was denied for that folder', 'error');
+      return false;
+    }
+    dirHandle = handle;
+    dirNeedsPermission = false;
+    try { await idbSet(DIR_KEY, handle); } catch (_) {}
+    updateFolderUI();
+    if (treeVisible) buildTree();
+    setStateMessage('Folder set: ' + handle.name, 'saved');
+    return true;
+  }
+  async function forgetFolder() {
+    dirHandle = null;
+    dirNeedsPermission = false;
+    await idbDelete(DIR_KEY);
+    updateFolderUI();
+    if (treeVisible) buildTree();
+  }
+  async function restoreFolder() {
+    if (!CAN_PICK_DIR) { updateFolderUI(); return; }
+    try {
+      const handle = await idbGet(DIR_KEY);
+      if (handle && typeof handle.queryPermission === 'function') {
+        dirHandle = handle;
+        dirNeedsPermission = !(await hasPermission(handle));
+        updateFolderUI();
+        if (treeVisible) buildTree();
+        return;
+      }
+    } catch (_) {}
+    updateFolderUI();
+  }
+
+  /* ================================================================
+   *  Single-file Save
+   * ================================================================ */
+  function currentFileName() {
+    const raw = (fileNameInput.value || '').trim().replace(/\.java$/i, '');
+    if (raw) return raw + '.java';
+    const detected = detectMainClassName(getFullSource());
+    return (detected || 'Main') + '.java';
+  }
+  async function writeToFolder(dir, name, text) {
+    const fileHandle = await dir.getFileHandle(name, { create: true });
+    const writable   = await fileHandle.createWritable();
+    await writable.write(text);
+    await writable.close();
+  }
+  function downloadViaAnchor(name, text) {
+    const blob = new Blob([text], { type: 'text/x-java-source;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  async function save(forcePicker) {
+    const name = currentFileName();
+    const code = getFullSource();
+
+    if (!forcePicker) {
+      if (!dirHandle && CAN_PICK_DIR) {
+        const ok = await chooseFolder();
+        if (!ok) return;
+      }
+      if (dirHandle) {
+        let granted = await hasPermission(dirHandle);
+        if (!granted) granted = await ensurePermission(dirHandle);
+        if (granted) {
+          try {
+            await writeToFolder(dirHandle, name, code);
+            markSaved();
+            setStateMessage('Saved to ' + dirHandle.name + '/' + name, 'saved');
+            if (treeVisible) buildTree();
+            return;
+          } catch (err) {
+            await forgetFolder();
+            setStateMessage('Folder unavailable — please choose it again', 'error');
+            return;
+          }
+        } else {
+          dirNeedsPermission = true;
+          updateFolderUI();
+          setStateMessage('Permission needed for "' + dirHandle.name + '" — click Save again', 'error');
+          return;
+        }
+      }
+    }
+
+    if (CAN_PICK_FILE) {
+      try {
+        const opts = {
+          suggestedName: name,
+          types: [{ description: 'Java source file', accept: { 'text/x-java-source': ['.java'] } }]
+        };
+        if (dirHandle) opts.startIn = dirHandle;
+        const handle   = await window.showSaveFilePicker(opts);
+        const writable = await handle.createWritable();
+        await writable.write(code);
+        await writable.close();
+        markSaved();
+        setStateMessage('Saved ' + handle.name, 'saved');
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+      }
+    }
+
+    downloadViaAnchor(name, code);
+    markSaved();
+    setStateMessage('Downloaded ' + name, 'saved');
+  }
+
+  /* ================================================================
+   *  Syntax highlighting
+   * ================================================================ */
+  function esc(s) {
+    return s.replace(/[&<>]/g, c => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'));
+  }
+  function highlightSource(src) {
+    let html = '';
+    let last = 0;
+    let m;
+    TOKEN_RE.lastIndex = 0;
+    while ((m = TOKEN_RE.exec(src)) !== null) {
+      if (m.index > last) html += esc(src.slice(last, m.index));
+      const full = m[0];
+      const [, comment, str, num, anno, ident] = m;
+      let cls = null;
+      if (comment)      cls = 'tok-comment';
+      else if (str)     cls = 'tok-string';
+      else if (num)     cls = 'tok-number';
+      else if (anno)    cls = 'tok-annotation';
+      else if (ident) {
+        if (KEYWORDS.has(ident))                     cls = 'tok-keyword';
+        else if (LITERALS.has(ident))                cls = 'tok-literal';
+        else if (/^[A-Z]/.test(ident))               cls = 'tok-type';
+        else if (src[m.index + full.length] === '(') cls = 'tok-method';
+      }
+      html += cls ? '<span class="' + cls + '">' + esc(full) + '</span>' : esc(full);
+      last = m.index + full.length;
+    }
+    html += esc(src.slice(last));
+    return html;
+  }
+
+  /* ================================================================
+   *  Indent guides
+   * ================================================================ */
+  let charWidthCache = { fontSize: null, width: 0 };
+  function getCharWidth() {
+    const cs = getComputedStyle(editor);
+    if (charWidthCache.fontSize === cs.fontSize && charWidthCache.width) return charWidthCache.width;
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;top:-9999px;left:-9999px;white-space:pre;padding:0;border:0;margin:0;';
+    probe.style.fontFamily = cs.fontFamily;
+    probe.style.fontSize   = cs.fontSize;
+    probe.style.fontWeight = cs.fontWeight;
+    probe.style.fontStyle  = cs.fontStyle;
+    probe.textContent = '0'.repeat(50);
+    document.body.appendChild(probe);
+    const w = probe.getBoundingClientRect().width / 50;
+    probe.remove();
+    charWidthCache = { fontSize: cs.fontSize, width: w };
+    return w;
+  }
+  function gcd(a, b) { while (b) { const t = b; b = a % b; a = t; } return a; }
+  function detectIndentUnit(lines) {
+    let g = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim() === '') continue;
+      const lead = line.match(/^[ \t]*/)[0];
+      let count = 0;
+      for (let j = 0; j < lead.length; j++) count += lead[j] === '\t' ? INDENT_UNIT : 1;
+      if (count > 0) { g = g === 0 ? count : gcd(g, count); if (g === 1) break; }
+    }
+    if (g < 2 || g > 8) return INDENT_UNIT;
+    return g;
+  }
+  function computeGuides(lines, unit) {
+    const n = lines.length;
+    if (n === 0) return [];
+    const raw = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const line = lines[i];
+      if (line.trim() === '') { raw[i] = null; continue; }
+      const m = line.match(/^[ \t]*/)[0];
+      let count = 0;
+      for (const ch of m) count += ch === '\t' ? INDENT_UNIT : 1;
+      raw[i] = count;
+    }
+    const leading = raw.slice();
+    for (let i = 0; i < n; i++) {
+      if (leading[i] !== null) continue;
+      let prev = null, next = null;
+      for (let j = i - 1; j >= 0; j--) if (raw[j] !== null) { prev = raw[j]; break; }
+      for (let j = i + 1; j < n; j++) if (raw[j] !== null) { next = raw[j]; break; }
+      if (prev === null && next === null)      leading[i] = 0;
+      else if (prev === null)                  leading[i] = next;
+      else if (next === null)                  leading[i] = prev;
+      else                                     leading[i] = Math.max(prev, next);
+    }
+    let maxLeading = 0;
+    for (const l of leading) if (l > maxLeading) maxLeading = l;
+    const maxCols = Math.ceil(maxLeading / unit);
+    const counts = new Array(n).fill(0);
+    for (let c = 0; c < maxCols; c++) {
+      const pos = c * unit;
+      let i = 0;
+      while (i < n) {
+        if (leading[i] > pos) {
+          const start = i;
+          while (i < n && leading[i] > pos) i++;
+          const end = i - 1;
+          for (let j = start; j <= end; j++) counts[j] = c + 1;
+        } else i++;
+      }
+    }
+    return counts;
+  }
+  function renderGuides() {
+    if (!state.guides) {
+      if (guidesTrack.firstChild) guidesTrack.replaceChildren();
+      return;
+    }
+    const lines = editor.value.split('\n');
+    const unit  = detectIndentUnit(lines);
+    const counts = computeGuides(lines, unit);
+    const cs = getComputedStyle(editor);
+    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const padY = parseFloat(cs.paddingTop) || 0;
+    const padX = parseFloat(cs.paddingLeft) || 0;
+    const charWidth = getCharWidth();
+    const indentWidth = charWidth * unit;
+    let maxCol = 0;
+    for (const c of counts) if (c > maxCol) maxCol = c;
+    if (maxCol === 0) { if (guidesTrack.firstChild) guidesTrack.replaceChildren(); return; }
+    const frag = document.createDocumentFragment();
+    for (let c = 0; c < maxCol; c++) {
+      let blockStart = -1;
+      for (let i = 0; i <= counts.length; i++) {
+        const has = i < counts.length && counts[i] > c;
+        if (has && blockStart === -1) blockStart = i;
+        else if (!has && blockStart !== -1) {
+          const div = document.createElement('div');
+          div.className = 'guide';
+          div.dataset.col = String(c);
+          div.style.left   = (padX + c * indentWidth + 2) + 'px';
+          div.style.top    = (padY + blockStart * lineHeight) + 'px';
+          div.style.height = ((i - blockStart) * lineHeight) + 'px';
+          frag.appendChild(div);
+          blockStart = -1;
+        }
+      }
+    }
+    guidesTrack.replaceChildren(frag);
+  }
+
+  /* ================================================================
+   *  Rendering
+   * ================================================================ */
+  let renderQueued = false;
+  function queueRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(() => { renderQueued = false; render(); });
+  }
+  function render() {
+    const src = editor.value;
+    let html = highlightSource(src);
+    if (src.endsWith('\n')) html += ' ';
+    highlightCode.innerHTML = html;
+
+    const labels = computeLineLabels();
+    const buf = document.createDocumentFragment();
+    for (const n of labels) {
+      const d = document.createElement('div');
+      d.textContent = String(n);
+      buf.appendChild(d);
+    }
+    lineNumbers.replaceChildren(buf);
+
+    renderFoldColumn();
+
+    renderGuides();
+    syncScroll();
+    updateOverlays();
+    updateStatus();
+    syncFileNameFromCode();
+  }
+  function syncScroll() {
+    highlight.scrollTop  = editor.scrollTop;
+    highlight.scrollLeft = editor.scrollLeft;
+    const ty = 'translateY(' + (-editor.scrollTop) + 'px)';
+    lineNumbers.style.transform = ty;
+    foldCol.style.transform = ty;
+    const t = 'translate(' + (-editor.scrollLeft) + 'px, ' + (-editor.scrollTop) + 'px)';
+    guidesTrack.style.transform  = t;
+    overlayTrack.style.transform = t;
+  }
+  function updateStatus() {
+    const v = editor.value;
+    const s = editor.selectionStart;
+    const e = editor.selectionEnd;
+    const before = v.slice(0, s);
+    const line = before.split('\n').length;
+    const col  = s - before.lastIndexOf('\n');
+    statusPos.textContent   = 'Ln ' + line + ', Col ' + col;
+    statusSel.textContent   = e > s ? 'Sel ' + (e - s) : '';
+    statusLines.textContent = v.split('\n').length + ' lines';
+    statusChars.textContent = v.length + ' chars';
+  }
+
+  let messageTimer = null;
+  function setStateMessage(msg, kind) {
+    statusState.textContent = msg;
+    statusState.className = kind || '';
+    clearTimeout(messageTimer);
+    messageTimer = setTimeout(() => { statusState.className = ''; refreshDirty(); }, 2200);
+  }
+  function markSaved() { lastSavedText = getFullSource(); refreshDirty(); }
+  function refreshDirty() {
+    if (messageTimer && statusState.className) return;
+    if (lastSavedText === null) { statusState.textContent = 'Ready'; statusState.className = ''; return; }
+    const dirty = getFullSource() !== lastSavedText;
+    statusState.textContent = dirty ? '● Unsaved changes' : 'All changes saved';
+    statusState.className   = dirty ? 'dirty' : 'saved';
+  }
+
+  /* ================================================================
+   *  Edit helper
+   * ================================================================ */
+  function applyEdit(start, end, text, selStart, selEnd) {
+    if (start === end && text === '') return;
+    editor.focus();
+    editor.setSelectionRange(start, end);
+    let ok = false;
+    try {
+      ok = text === ''
+        ? document.execCommand('delete', false, null)
+        : document.execCommand('insertText', false, text);
+    } catch (_) { ok = false; }
+    if (!ok) {
+      const v = editor.value;
+      editor.value = v.slice(0, start) + text + v.slice(end);
+    }
+    if (selStart === undefined) selStart = start + text.length;
+    if (selEnd === undefined)   selEnd = selStart;
+    editor.setSelectionRange(selStart, selEnd);
+    _braceSrc = null;
+    maskCacheSrc = null;
+    queueRender();
+    saveSoon();
+    refreshDirty();
+  }
+  function mapOffset(o, infos) {
+    let start = 0, acc = 0;
+    for (let i = 0; i < infos.length; i++) {
+      const info = infos[i];
+      const end = start + info.len;
+      if (o <= end) {
+        const within = o - start;
+        let d = 0;
+        if (info.delta > 0) { if (within >= info.pos) d = info.delta; }
+        else if (info.delta < 0) d = -Math.min(-info.delta, Math.max(0, within - info.pos));
+        return o + acc + d;
+      }
+      acc += info.delta;
+      start = end + 1;
+    }
+    return o + acc;
+  }
+  function transformLines(fn) {
+    const val = editor.value;
+    const s = editor.selectionStart;
+    const en = editor.selectionEnd;
+    const lineStart = val.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = val.indexOf('\n', en);
+    if (lineEnd === -1) lineEnd = val.length;
+    if (en > s && val[en - 1] === '\n') lineEnd = en - 1;
+    const lines = val.slice(lineStart, lineEnd).split('\n');
+    const infos = [];
+    const newLines = lines.map(line => {
+      const r = fn(line);
+      infos.push({ len: line.length, pos: r.pos, delta: r.delta });
+      return r.text;
+    });
+    const newBlock = newLines.join('\n');
+    const newS = lineStart + mapOffset(s - lineStart, infos);
+    const newE = lineStart + mapOffset(en - lineStart, infos);
+    applyEdit(lineStart, lineEnd, newBlock, newS, newE);
+  }
+  function handleTab(shift) {
+    if (!shift && trySnippet()) return;
+
+    const s = editor.selectionStart;
+    const en = editor.selectionEnd;
+    if (s === en && !shift) { applyEdit(s, en, INDENT); return; }
+    transformLines(line => {
+      if (!shift) return { text: INDENT + line, pos: 0, delta: INDENT.length };
+      const m = line.match(/^(\t| {1,2})/);
+      if (!m) return { text: line, pos: 0, delta: 0 };
+      return { text: line.slice(m[0].length), pos: 0, delta: -m[0].length };
+    });
+  }
+  function handleEnter() {
+    const val = editor.value;
+    const s = editor.selectionStart;
+    const en = editor.selectionEnd;
+    const lineStart = val.lastIndexOf('\n', s - 1) + 1;
+    const lineText  = val.slice(lineStart, s);
+    const indent    = (lineText.match(/^[ \t]*/) || [''])[0];
+    const trimmed   = lineText.replace(/[ \t]+$/, '');
+    if (s === en && val[s] === '}' && /\{\s*$/.test(trimmed)) {
+      const insert = '\n' + indent + INDENT + '\n' + indent;
+      applyEdit(s, en, insert, s + 1 + indent.length + INDENT.length);
+      return;
+    }
+    const nextIndent = /\{\s*$/.test(trimmed) ? indent + INDENT : indent;
+    applyEdit(s, en, '\n' + nextIndent);
+  }
+  function toggleComment() {
+    const val = editor.value;
+    const s = editor.selectionStart;
+    const en = editor.selectionEnd;
+    const lineStart = val.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = val.indexOf('\n', en);
+    if (lineEnd === -1) lineEnd = val.length;
+    if (en > s && val[en - 1] === '\n') lineEnd = en - 1;
+    const lines = val.slice(lineStart, lineEnd).split('\n');
+    const allCommented = lines.every(l => l.trim() === '' || /^\s*\/\//.test(l));
+    transformLines(line => {
+      if (allCommented) {
+        const m = line.match(/^(\s*)\/\/ ?/);
+        if (!m) return { text: line, pos: 0, delta: 0 };
+        return { text: m[1] + line.slice(m[0].length), pos: m[1].length, delta: -(m[0].length - m[1].length) };
+      }
+      if (line.trim() === '') return { text: line, pos: 0, delta: 0 };
+      const indentLen = (line.match(/^\s*/) || [''])[0].length;
+      return { text: line.slice(0, indentLen) + '// ' + line.slice(indentLen), pos: indentLen, delta: 3 };
+    });
+  }
+  function duplicateLine() {
+    const val = editor.value;
+    const s = editor.selectionStart;
+    const en = editor.selectionEnd;
+    const lineStart = val.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = val.indexOf('\n', en);
+    if (lineEnd === -1) lineEnd = val.length;
+    const block = val.slice(lineStart, lineEnd);
+    applyEdit(lineEnd, lineEnd, '\n' + block, s + block.length + 1, en + block.length + 1);
+  }
+  function moveLine(dir) {
+    const val = editor.value;
+    const s = editor.selectionStart;
+    const lineStart = val.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = val.indexOf('\n', s);
+    if (lineEnd === -1) lineEnd = val.length;
+    const line = val.slice(lineStart, lineEnd);
+    if (dir === -1) {
+      if (lineStart === 0) return;
+      const prevStart = val.lastIndexOf('\n', lineStart - 2) + 1;
+      const prevLine  = val.slice(prevStart, lineStart - 1);
+      applyEdit(prevStart, lineEnd, line + '\n' + prevLine, s - prevLine.length - 1);
+    } else {
+      if (lineEnd === val.length) return;
+      const nextEnd = val.indexOf('\n', lineEnd + 1);
+      const end = nextEnd === -1 ? val.length : nextEnd;
+      const nextLine = val.slice(lineEnd + 1, end);
+      applyEdit(lineStart, end, nextLine + '\n' + line, s + nextLine.length + 1);
+    }
+  }
+
+  /* ================================================================
+   *  Editor keydown
+   * ================================================================ */
+  editor.addEventListener('keydown', e => {
+    if (e.isComposing) return;
+
+    if (acVisible) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); acIndex = Math.min(acItems.length - 1, acIndex + 1); renderAC(); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); acIndex = Math.max(0, acIndex - 1); renderAC(); return; }
+      if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); acceptAC(acItems[acIndex].label); return; }
+      if (e.key === 'Escape')    { e.preventDefault(); closeAC(); return; }
+    }
+
+    const val = editor.value;
+    const s   = editor.selectionStart;
+    const en  = editor.selectionEnd;
+    const mod = e.ctrlKey || e.metaKey;
+
+    if (mod && e.key === ' ') { e.preventDefault(); openAC(); return; }
+    if (mod && e.key.toLowerCase() === 'b') { e.preventDefault(); toggleTree(); return; }
+
+    if (mod && e.key === 'Enter') { e.preventDefault(); runBtn.click(); return; }
+    if (mod && !e.altKey) {
+      const k = e.key.toLowerCase();
+      if (k === 's') { e.preventDefault(); save(e.shiftKey); return; }
+      if (k === 'd') { e.preventDefault(); duplicateLine();   return; }
+      if (e.key === '/') { e.preventDefault(); toggleComment(); return; }
+    }
+    if (e.altKey && !mod && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault(); moveLine(e.key === 'ArrowUp' ? -1 : 1); return;
+    }
+    if (e.key === 'Tab')   { e.preventDefault(); handleTab(e.shiftKey); return; }
+    if (e.key === 'Enter') { e.preventDefault(); handleEnter(); return; }
+    if (e.key === 'Backspace' && s === en && s > 0) {
+      const prev = val[s - 1];
+      if (OPENERS[prev] && OPENERS[prev] === val[s]) { e.preventDefault(); applyEdit(s - 1, s + 1, '', s - 1); return; }
+    }
+    if (CLOSERS.has(e.key) && s === en && val[s] === e.key) {
+      e.preventDefault();
+      editor.setSelectionRange(s + 1, s + 1);
+      updateStatus();
+      return;
+    }
+    if (OPENERS[e.key] && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      const close = OPENERS[e.key];
+      const selected = val.slice(s, en);
+      if (selected) { applyEdit(s, en, e.key + selected + close, s + 1, en + 1); return; }
+      const next = val[s] || '';
+      const isQuote = e.key === '"' || e.key === "'";
+      if (isQuote && /[\w"'`]/.test(next)) applyEdit(s, en, e.key);
+      else applyEdit(s, en, e.key + close, s + 1);
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key === 'Enter' && document.activeElement !== editor && document.activeElement !== termInput) {
+      e.preventDefault();
+      if (e.shiftKey) saveRunBtn.click();
+      else            runBtn.click();
+    }
+    if (e.key === 'F1') { e.preventDefault(); tipsBackdrop.classList.contains('open') ? closeTips() : openTips(); return; }
+    if (e.key === 'Escape') {
+      if (acVisible) { e.preventDefault(); closeAC(); return; }
+      if (tipsBackdrop.classList.contains('open')) { e.preventDefault(); closeTips(); }
+    }
+  });
+
+  /* ================================================================
+   *  Input / selection listeners
+   * ================================================================ */
+  editor.addEventListener('input', () => {
+    _braceSrc = null;
+    maskCacheSrc = null;
+    queueRender();
+    saveSoon();
+    refreshDirty();
+    refreshAC();
+  });
+  editor.addEventListener('scroll', () => {
+    syncScroll();
+    if (acVisible) positionAC();
+  }, { passive: true });
+  editor.addEventListener('click', () => { updateStatus(); updateOverlays(); });
+  editor.addEventListener('keyup',  () => { updateStatus(); updateOverlays(); });
+  document.addEventListener('selectionchange', () => {
+    if (document.activeElement === editor) {
+      updateStatus();
+      updateOverlays();
+    }
+  });
+  document.addEventListener('mousedown', (e) => {
+    if (acVisible && !acPopup.contains(e.target) && e.target !== editor) closeAC();
+  }, true);
+
+  window.addEventListener('resize', () => {
+    syncScroll();
+    updateOverlays();
+    if (acVisible) positionAC();
+  });
+  window.addEventListener('beforeunload', e => {
+    if (lastSavedText !== null && getFullSource() !== lastSavedText) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  /* ================================================================
+   *  Generic run over WebSocket
+   * ================================================================ */
+  async function startRun(opts) {
+    if (running) return;
+
+    if (opts.saveArtifacts) {
+      if (!CAN_PICK_DIR) {
+        clearTerm();
+        writeLine('✖ "Save & Run" needs the File System Access API (Chrome, Edge, Opera).', 'stderr');
+        setRunStatus('bad', 'unsupported');
+        return;
+      }
+      if (!dirHandle) {
+        const ok = await chooseFolder();
+        if (!ok) return;
+      } else if (!(await hasPermission(dirHandle))) {
+        if (!(await ensurePermission(dirHandle))) {
+          clearTerm();
+          writeLine('✖ Permission denied for "' + dirHandle.name + '".', 'stderr');
+          setRunStatus('bad', 'no permission');
+          return;
+        }
+      }
+    }
+
+    running = true;
+    runBtn.classList.add('stop');
+    runBtn.disabled     = false;
+    saveRunBtn.disabled = true;
+    runLabel.innerHTML     = '■ Stop';
+    saveRunLabel.innerHTML = '<span class="spin"></span> Running';
+    runBtn.title = 'Click to kill the running program';
+    setRunStatus('busy', 'compiling…');
+    runTime.textContent = '';
+    clearTerm();
+    stdinWrap.classList.add('interactive', 'inactive');
+    stdinBox.disabled = true;
+    inputModeTag.textContent = 'INPUT';
+    inputHint.textContent = '— type in the terminal above ↑';
+    closeAC();
+
+    if (opts.label) {
+      writeLine(opts.label, 'meta');
+    } else if (opts.classFiles) {
+      const argStr = (opts.args || []).map(a => /\s/.test(a) ? '"' + a + '"' : a).join(' ');
+      writeLine('$ java ' + opts.className + (argStr ? ' ' + argStr : ''), 'meta');
+    } else {
+      const name = detectMainClassName(opts.code) || 'Main';
+      const argStr = (opts.args || []).map(a => /\s/.test(a) ? '"' + a + '"' : a).join(' ');
+      writeLine('$ javac ' + name + '.java   →   java ' + name + (argStr ? ' ' + argStr : ''), 'meta');
+    }
+
+    const presetStdin = cmdMode ? '' : stdinBox.value;
+    const t0          = performance.now();
+    let finalStatus   = { kind: '', label: 'closed' };
+
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const url   = proto + '//' + location.host + '/ws/run';
+
+    let ws;
+    try { ws = new WebSocket(url); }
+    catch (e) {
+      termWrite('✖ Could not open WebSocket: ' + e.message + '\n', 'stderr');
+      cleanupRun();
+      return;
+    }
+    activeWs = ws;
+
+    ws.onopen = () => {
+      const startMsg = { type: 'start' };
+      if (opts.classFiles) {
+        startMsg.classFiles = opts.classFiles;
+        startMsg.className  = opts.className;
+      } else {
+        startMsg.code = opts.code;
+      }
+      startMsg.stdin  = presetStdin;
+      startMsg.args   = opts.args || [];
+      startMsg.wantClassFiles = !!opts.saveArtifacts;
+      ws.send(JSON.stringify(startMsg));
+    };
+
+    ws.onmessage = async (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+
+      if (msg.type === 'stage') {
+        if (msg.stage === 'compile') setRunStatus('busy', 'compiling…');
+        else if (msg.stage === 'run') {
+          setRunStatus('busy', 'running…');
+          showTermInput();
+        }
+        return;
+      }
+      if (msg.type === 'stdout') { termWrite(msg.data, 'stdout'); return; }
+      if (msg.type === 'stderr') { termWrite(msg.data, 'stderr'); return; }
+      if (msg.type === 'note')   { termWrite(msg.data, 'note');   return; }
+      if (msg.type === 'error')  { termWrite('✖ ' + msg.error + '\n', 'stderr'); return; }
+
+      if (msg.type === 'classFiles') {
+        if (opts.saveArtifacts && dirHandle) {
+          try {
+            await persistArtifacts({
+              className: msg.className,
+              packageName: msg.packageName,
+              classFiles: msg.classFiles
+            }, opts.code);
+            markSaved();
+            termWrite('\n', 'meta');
+          } catch (err) {
+            termWrite('✖ Failed to save to "' + dirHandle.name + '": ' + err.message + '\n', 'stderr');
+          }
+        }
+        try { ws.send(JSON.stringify({ type: 'classFilesAck' })); } catch (_) {}
+        return;
+      }
+
+      if (msg.type === 'exit') {
+        const ms = msg.durationMs || Math.round(performance.now() - t0);
+        runTime.textContent = ms + ' ms';
+        hideTermInput();
+        if (msg.code === 0) {
+          termWrite('\n✓ Finished with exit code 0\n', 'ok');
+          finalStatus = { kind: 'ok', label: 'exit 0' };
+        } else if (msg.timedOut) {
+          termWrite('\n', 'meta');
+          finalStatus = { kind: 'bad', label: 'timeout' };
+        } else if (msg.code === -2) {
+          termWrite('\n■ Stopped\n', 'note');
+          finalStatus = { kind: 'bad', label: 'stopped' };
+        } else {
+          termWrite('\n✖ Exited with code ' + msg.code + '\n', 'stderr');
+          finalStatus = { kind: 'bad', label: 'exit ' + msg.code };
+        }
+        return;
+      }
+    };
+
+    ws.onerror = () => { termWrite('✖ WebSocket error.\n', 'stderr'); };
+    ws.onclose = () => {
+      setRunStatus(finalStatus.kind, finalStatus.label);
+      cleanupRun();
+    };
+
+    function cleanupRun() {
+      if (activeWs === ws) activeWs = null;
+      running = false;
+      runBtn.classList.remove('stop');
+      runBtn.disabled     = false;
+      saveRunBtn.disabled = false;
+      runLabel.textContent     = '▶ Run';
+      saveRunLabel.textContent = '💾 Save & Run';
+      runBtn.title = 'Compile & run interactively (Ctrl+Enter)';
+      stdinWrap.classList.remove('interactive', 'inactive');
+      stdinBox.disabled = false;
+      hideTermInput();
+      inputModeTag.textContent = cmdMode ? 'CMD' : 'STDIN';
+      inputHint.textContent = cmdMode
+        ? '— commands run against your selected folder'
+        : '— pre-filled into System.in when the program starts';
+      scrollTerm();
+    }
+  }
+
+  runBtn.addEventListener('click', () => {
+    if (running) {
+      if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+        activeWs.send(JSON.stringify({ type: 'kill' }));
+      }
+      return;
+    }
+    startRun({ code: getFullSource(), args: parseArgs(argsInput.value), saveArtifacts: false });
+  });
+  saveRunBtn.addEventListener('click', () => {
+    if (running) return;
+    startRun({ code: getFullSource(), args: parseArgs(argsInput.value), saveArtifacts: true });
+  });
+
+  clearOut.addEventListener('click', () => {
+    clearTerm();
+    runTime.textContent = '';
+    setRunStatus('', 'idle');
+  });
+
+  /* ================================================================
+   *  stdin textarea
+   * ================================================================ */
+  stdinBox.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    if (running) return;
+    if (!cmdMode) return;
+    e.preventDefault();
+    const cmd = stdinBox.value.trim();
+    if (!cmd) return;
+    stdinBox.value = '';
+    runCmd(cmd);
+  });
+  stdinBox.addEventListener('input', saveSoon);
+
+  /* ================================================================
+   *  CMD mode
+   * ================================================================ */
+  function setCmdMode(on) {
+    cmdMode = on;
+    cmdBtn.classList.toggle('on', on);
+    stdinWrap.classList.toggle('cmd-mode', on && !running);
+    inputModeTag.textContent = running ? 'INPUT' : (on ? 'CMD' : 'STDIN');
+    inputHint.textContent = running
+      ? '— type in the terminal above ↑'
+      : (on ? '— commands run against your selected folder'
+            : '— pre-filled into System.in when the program starts');
+    stdinBox.placeholder = on ? 'javac Main.java' : 'e.g.\n42\nhello';
+
+    if (on && !running) {
+      stdinBox.value = '';
+      writeLine('', 'meta');
+      writeLine('CMD mode — commands operate on the selected folder.', 'note');
+      writeLine('Workflow:  push  →  javac Main.java  →  java Main arg1 arg2', 'meta');
+      writeLine('Also:  ls · pwd · cat <file> · echo <text> · cls · help', 'meta');
+      if (!dirHandle) writeLine('⚠ No folder selected — click the 📁 button first.', 'stderr');
+      stdinBox.focus();
+    }
+    saveState();
+  }
+  cmdBtn.addEventListener('click', () => { if (!running) setCmdMode(!cmdMode); });
+
+  async function readFolderFile(relPath) {
+    const parts = relPath.split('/');
+    const fname = parts.pop();
+    let dir = dirHandle;
+    for (const p of parts) dir = await dir.getDirectoryHandle(p);
+    const fh = await dir.getFileHandle(fname);
+    const file = await fh.getFile();
+    return await file.text();
+  }
+  async function listFolder() {
+    const out = [];
+    for await (const [name, handle] of dirHandle.entries()) {
+      out.push(handle.kind === 'directory' ? name + '/' : name);
+    }
+    return out;
+  }
+  async function findClassFilesByBase(dir, prefix, baseName, expectedFqn, out) {
+    for await (const [name, handle] of dir.entries()) {
+      const fullPath = prefix ? prefix + '/' + name : name;
+      if (handle.kind === 'file' && name === baseName + '.class') {
+        const fqn = fullPath.replace(/\.class$/, '').replace(/\//g, '.');
+        if (!expectedFqn || fqn === expectedFqn) out.push({ relPath: fullPath, fqn });
+      } else if (handle.kind === 'directory') {
+        await findClassFilesByBase(handle, fullPath, baseName, expectedFqn, out);
+      }
+    }
+  }
+  async function collectAllClassFiles(dir, prefix, out) {
+    for await (const [name, handle] of dir.entries()) {
+      const fullPath = prefix ? prefix + '/' + name : name;
+      if (handle.kind === 'file' && name.endsWith('.class')) {
+        const file = await handle.getFile();
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        out.push({ name: fullPath, data: bytesToBase64(bytes) });
+      } else if (handle.kind === 'directory') {
+        await collectAllClassFiles(handle, fullPath, out);
+      }
+    }
+  }
+
+  async function cmdPush() {
+    if (!dirHandle) { writeLine('✖ No folder selected.', 'stderr'); return; }
+    const code = getFullSource();
+    const cls  = detectMainClassName(code) || 'Main';
+    const pkg  = detectPackageName(code);
+    const pkgPath = pkg ? pkg.split('.').join('/') + '/' : '';
+    try {
+      const javaDir = await dirHandle.getDirectoryHandle('java', { create: true });
+      await writeTextAtPath(javaDir, pkgPath + cls + '.java', code);
+      writeLine('✓ Wrote java/' + pkgPath + cls + '.java', 'ok');
+      markSaved();
+      if (treeVisible) buildTree();
+    } catch (e) { writeLine('✖ push failed: ' + e.message, 'stderr'); }
+  }
+
+  async function cmdJavac(arg) {
+    if (!dirHandle) { writeLine('✖ No folder selected.', 'stderr'); return; }
+    if (!arg) { writeLine('Usage: javac <FileName.java>', 'stderr'); return; }
+    if (!/^[A-Za-z_$][\w$]*\.java$/.test(arg)) {
+      writeLine('✖ javac: expected a simple .java name (e.g. Main.java).', 'stderr');
+      return;
+    }
+    let code;
+    try { code = await readFolderFile('java/' + arg); }
+    catch (_) {
+      writeLine('✖ javac: file not found: java/' + arg, 'stderr');
+      writeLine('  Tip: type  push  to write the editor to java/.', 'meta');
+      return;
+    }
+    let data;
+    try {
+      const res = await fetch('/api/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      data = await res.json();
+    } catch (e) { writeLine('✖ Network error: ' + e.message, 'stderr'); return; }
+
+    if (data.stdout) writeLine(data.stdout.replace(/\n$/, ''), 'stdout');
+    if (data.stderr) writeLine(data.stderr.replace(/\n$/, ''), 'stderr');
+    if (!data.ok) { if (data.error) writeLine('✖ ' + data.error, 'stderr'); return; }
+
+    try {
+      const classDir = await dirHandle.getDirectoryHandle('class', { create: true });
+      for (const cf of data.classFiles) {
+        await writeBinaryAtPath(classDir, cf.name, base64ToBytes(cf.data));
+      }
+      writeLine('✓ Compiled → class/' + data.classFiles.map(f => f.name).join(', class/'), 'ok');
+      if (treeVisible) buildTree();
+    } catch (e) { writeLine('✖ Failed to write .class files: ' + e.message, 'stderr'); }
+  }
+
+  async function cmdJava(parts) {
+    if (running) { writeLine('✖ A program is already running.', 'stderr'); return; }
+    if (!dirHandle) { writeLine('✖ No folder selected.', 'stderr'); return; }
+    if (!parts.length) { writeLine('Usage: java <ClassName> [args...]', 'stderr'); return; }
+    const className = parts[0];
+    const args      = parts.slice(1);
+    if (!/^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*$/.test(className)) {
+      writeLine('✖ java: invalid class name.', 'stderr');
+      return;
+    }
+    let classDir;
+    try { classDir = await dirHandle.getDirectoryHandle('class'); }
+    catch (_) { writeLine('✖ java: no class/ folder. Run javac first.', 'stderr'); return; }
+
+    const baseName   = className.split('.').pop();
+    const expectedFqn = className.includes('.') ? className : null;
+    const found = [];
+    await findClassFilesByBase(classDir, '', baseName, expectedFqn, found);
+    if (found.length === 0) { writeLine('✖ java: could not find ' + className + '.class in class/', 'stderr'); return; }
+    if (found.length > 1) {
+      writeLine('✖ java: multiple matches for ' + className + ': ' + found.map(f => f.relPath).join(', '), 'stderr');
+      return;
+    }
+
+    const allClasses = [];
+    try { await collectAllClassFiles(classDir, '', allClasses); }
+    catch (e) { writeLine('✖ Could not read class/ folder: ' + e.message, 'stderr'); return; }
+
+    startRun({
+      classFiles: allClasses,
+      className: found[0].fqn,
+      args,
+      saveArtifacts: false
+    });
+  }
+
+  async function cmdCat(arg) {
+    if (!dirHandle) { writeLine('✖ No folder selected.', 'stderr'); return; }
+    if (!arg) { writeLine('Usage: cat <file>', 'stderr'); return; }
+    try { const text = await readFolderFile(arg); writeLine(text.replace(/\n$/, ''), 'stdout'); }
+    catch (_) { writeLine('✖ cat: ' + arg + ': not found', 'stderr'); }
+  }
+
+  async function runCmd(cmd) {
+    writeLine('$ ' + cmd, 'prompt');
+    const parts = cmd.trim().split(/\s+/);
+    const first = parts[0].toLowerCase();
+
+    if (first === 'cls' || first === 'clear') { clearTerm(); scrollTerm(); return; }
+    if (first === 'pwd') { writeLine(dirHandle ? '/' + dirHandle.name : '(no folder selected)', 'stdout'); scrollTerm(); return; }
+    if (first === 'echo') { writeLine(parts.slice(1).join(' '), 'stdout'); scrollTerm(); return; }
+
+    if (first === 'ls' || first === 'dir') {
+      if (!dirHandle) { writeLine('✖ No folder selected.', 'stderr'); scrollTerm(); return; }
+      try {
+        const entries = await listFolder();
+        writeLine(entries.length ? entries.join('\n') : '(empty)', 'stdout');
+      } catch (e) { writeLine('✖ ' + e.message, 'stderr'); }
+      scrollTerm(); return;
+    }
+
+    if (first === 'cat' || first === 'type') { await cmdCat(parts[1]); scrollTerm(); return; }
+    if (first === 'push' || first === 'save') { await cmdPush(); scrollTerm(); return; }
+    if (first === 'javac') { await cmdJavac(parts[1]); scrollTerm(); return; }
+    if (first === 'java')  { await cmdJava(parts.slice(1)); scrollTerm(); return; }
+
+    if (first === 'help' || first === '?') {
+      writeLine('push                    save editor → <folder>/java/<ClassName>.java', 'meta');
+      writeLine('javac <File.java>       compile <folder>/java/<File.java> → <folder>/class/', 'meta');
+      writeLine('java <ClassName> [args] run <folder>/class/<ClassName>.class interactively', 'meta');
+      writeLine('ls | pwd | cat <f> | echo <t> | cls | help', 'meta');
+      scrollTerm(); return;
+    }
+
+    writeLine(`'${parts[0]}' is not recognized. Type  help  for a list.`, 'stderr');
+    scrollTerm();
+  }
+
+  /* ================================================================
+   *  Toolbar actions
+   * ================================================================ */
+  saveBtn.addEventListener('click', () => save(false));
+  saveAsBtn.addEventListener('click', () => save(true));
+  folderBtn.addEventListener('click', () => chooseFolder());
+
+  document.getElementById('openBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      foldRegistry.clear();
+      editor.value = String(reader.result).replace(/\r\n?/g, '\n');
+      userEditedFileName = true;
+      fileNameInput.value = file.name.replace(/\.java$/i, '') || 'Main';
+      editor.focus();
+      editor.setSelectionRange(0, 0);
+      markSaved();
+      queueRender();
+      saveState();
+      setStateMessage('Opened ' + file.name, 'saved');
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(getFullSource());
+      setStateMessage('Copied to clipboard', 'saved');
+    } catch (_) {
+      editor.select();
+      try { document.execCommand('copy'); setStateMessage('Copied to clipboard', 'saved'); }
+      catch (_) { setStateMessage('Copy failed', 'error'); }
+      editor.setSelectionRange(0, 0);
+    }
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (!editor.value.trim() || confirm('Clear the editor? This cannot be undone.')) {
+      editor.value = '';
+      foldRegistry.clear();
+      editor.focus();
+      editor.setSelectionRange(0, 0);
+      queueRender();
+      saveState();
+      refreshDirty();
+    }
+  });
+
+  guidesBtn.addEventListener('click', () => {
+    state.guides = !state.guides;
+    editorShell.classList.toggle('no-guides', !state.guides);
+    guidesBtn.classList.toggle('on', state.guides);
+    guidesBtn.title = state.guides ? 'Hide indent guides' : 'Show indent guides';
+    renderGuides();
+    updateOverlays();
+    saveState();
+  });
+
+  themeBtn.addEventListener('click', () => setTheme(state.theme === 'dark' ? 'light' : 'dark'));
+
+  document.getElementById('fontUp').addEventListener('click', () => setFontSize(state.fontSize + 1));
+  document.getElementById('fontDown').addEventListener('click', () => setFontSize(state.fontSize - 1));
+
+  fileNameInput.addEventListener('input', () => {
+    userEditedFileName = fileNameInput.value.trim().length > 0;
+    updateAutoBadge();
+    if (!userEditedFileName) syncFileNameFromCode();
+    saveSoon();
+  });
+  argsInput.addEventListener('input', saveSoon);
+
+  function setTheme(theme) {
+    state.theme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    saveState();
+  }
+  function setFontSize(px) {
+    state.fontSize = Math.max(11, Math.min(28, px));
+    document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
+    charWidthCache.width = 0;
+    queueRender();
+    saveState();
+  }
+
+  /* ================================================================
+   *  Vertical splitter (editor ↔ side panel)
+   * ================================================================ */
+  (function () {
+    let dragging = false;
+    const onDown = e => { dragging = true; document.body.classList.add('resizing-v'); try { splitterV.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); };
+    const onMove = e => {
+      if (!dragging) return;
+      const r = workspace.getBoundingClientRect();
+      const desired = r.right - e.clientX;
+      const clamped = Math.max(240, Math.min(r.width - 280, desired));
+      sidePanel.style.flexBasis = clamped + 'px';
+    };
+    const onUp = e => { if (!dragging) return; dragging = false; document.body.classList.remove('resizing-v'); try { splitterV.releasePointerCapture(e.pointerId); } catch (_) {} };
+    splitterV.addEventListener('pointerdown', onDown);
+    splitterV.addEventListener('pointermove', onMove);
+    splitterV.addEventListener('pointerup', onUp);
+    splitterV.addEventListener('pointercancel', onUp);
+  })();
+
+  /* ================================================================
+   *  Persistence
+   * ================================================================ */
+  let saveTimer = null;
+  function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveState, 400); }
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        code: getFullSource(),
+        fileName: fileNameInput.value,
+        autoFileName: !userEditedFileName,
+        args: argsInput.value,
+        cmdMode: cmdMode,
+        stdinPrefill: cmdMode ? '' : stdinBox.value,
+        fontSize: state.fontSize,
+        theme: state.theme,
+        guides: state.guides,
+        treeVisible: treeVisible,
+        treeBasis: treeBasis
+      }));
+    } catch (_) {}
+  }
+  function loadState() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (_) { saved = null; }
+    if (saved && typeof saved.code === 'string') {
+      foldRegistry.clear();
+      editor.value = saved.code;
+      fileNameInput.value = saved.fileName || 'Main';
+      userEditedFileName = saved.autoFileName === false;
+      argsInput.value = saved.args || '';
+      state.fontSize = saved.fontSize || 15;
+      state.theme = saved.theme || 'dark';
+      state.guides = saved.guides !== false;
+      if (typeof saved.stdinPrefill === 'string') stdinBox.value = saved.stdinPrefill;
+      cmdMode = !!saved.cmdMode;
+      treeBasis = saved.treeBasis || 240;
+      treeVisible = !!saved.treeVisible;
+    } else {
+      editor.value = DEFAULT_CODE;
+      userEditedFileName = false;
+    }
+    document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
+    setTheme(state.theme);
+    editorShell.classList.toggle('no-guides', !state.guides);
+    guidesBtn.classList.toggle('on', state.guides);
+    guidesBtn.title = state.guides ? 'Hide indent guides' : 'Show indent guides';
+    updateAutoBadge();
+    cmdBtn.classList.toggle('on', cmdMode);
+    stdinWrap.classList.toggle('cmd-mode', cmdMode);
+    inputModeTag.textContent = cmdMode ? 'CMD' : 'STDIN';
+    stdinBox.placeholder = cmdMode ? 'javac Main.java' : 'e.g.\n42\nhello';
+    inputHint.textContent = cmdMode
+      ? '— commands run against your selected folder'
+      : '— pre-filled into System.in when the program starts';
+
+    treePanel.classList.toggle('hidden', !treeVisible);
+    splitterTree.classList.toggle('hidden', !treeVisible);
+    treeBtn.classList.toggle('on', treeVisible);
+    if (treeVisible) treePanel.style.flexBasis = treeBasis + 'px';
+
+    render();
+    markSaved();
+  }
+
+  /* ================================================================
+   *  Boot
+   * ================================================================ */
+  loadState();
+  editor.focus();
+  editor.setSelectionRange(0, 0);
+
+  restoreFolder().then(() => {
+    if (dirHandle && dirNeedsPermission) {
+      setStateMessage('Click Save to reconnect to "' + dirHandle.name + '"', 'dirty');
+    }
+  });
+
+  checkJdk();
+
+})();
+</script>
+</body>
+</html>
