@@ -121,9 +121,10 @@
     display: flex; align-items: center; gap: 6px;
     height: 34px; padding: 0 10px;
     background: var(--bg-panel); border: 1px solid var(--border); border-radius: 7px;
-    transition: border-color .15s;
+    transition: border-color .15s, opacity .15s;
   }
   .field:focus-within { border-color: var(--accent); }
+  .field.disabled { opacity: .55; }
   .field-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--fg-muted); }
   .field input {
     width: 110px; padding: 0; border: 0; outline: none;
@@ -189,31 +190,22 @@
   .btn.folder-btn.attention { border-color: var(--warn); color: var(--warn); }
   .btn.folder-btn.attention .folder-name { color: var(--warn); }
 
-  /* ---------------- Workspace ---------------- */
   .workspace {
     flex: 1 1 auto; min-height: 0;
     display: flex; flex-direction: row; gap: 0; align-items: stretch;
   }
 
-  /* ---------------- File tree ---------------- */
   .tree-panel {
-    flex: 0 0 240px;
-    min-width: 140px;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
+    flex: 0 0 240px; min-width: 140px; max-width: 500px;
+    display: flex; flex-direction: column;
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
     box-shadow: 0 8px 30px rgba(0, 0, 0, .22);
   }
   .tree-panel.hidden { display: none; }
   .tree-head {
-    flex: 0 0 auto;
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 10px;
-    background: var(--bg-elev);
+    flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: var(--bg-elev);
     border-bottom: 1px solid var(--border);
     font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
     color: var(--fg-muted);
@@ -226,21 +218,20 @@
   }
   .tree-head button:hover { color: var(--fg); border-color: var(--fg-muted); }
   .tree-body {
-    flex: 1 1 auto; overflow: auto;
-    padding: 6px 0;
-    font-family: var(--mono); font-size: 12.5px;
-    scrollbar-width: thin;
+    flex: 1 1 auto; overflow: auto; padding: 6px 0;
+    font-family: var(--mono); font-size: 12.5px; scrollbar-width: thin;
   }
   .tree-body::-webkit-scrollbar { width: 10px; }
   .tree-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
   .tree-row {
     display: flex; align-items: center; gap: 4px;
     padding: 3px 8px 3px 4px;
-    cursor: pointer; white-space: nowrap;
-    border-radius: 4px;
+    cursor: pointer; white-space: nowrap; border-radius: 4px;
   }
   .tree-row:hover { background: var(--bg-elev); }
   .tree-row.active { background: var(--accent); color: #fff; }
+  .tree-row.ro .tree-name { color: var(--fg-muted); }
+  .tree-row.active .tree-name { color: #fff; }
   .tree-toggle {
     display: inline-block; width: 12px; text-align: center;
     color: var(--fg-muted); font-size: 9px; flex: 0 0 auto;
@@ -258,16 +249,12 @@
   }
 
   .splitter-tree {
-    flex: 0 0 6px;
-    cursor: col-resize;
-    position: relative;
-    background: transparent;
-    user-select: none;
+    flex: 0 0 6px; cursor: col-resize; position: relative;
+    background: transparent; user-select: none;
   }
   .splitter-tree.hidden { display: none; }
   .splitter-tree::after {
-    content: "";
-    position: absolute; left: 50%; top: 50%;
+    content: ""; position: absolute; left: 50%; top: 50%;
     transform: translate(-50%, -50%);
     width: 3px; height: 40px; border-radius: 3px;
     background: var(--border);
@@ -280,7 +267,6 @@
   body.resizing-tree .side-panel,
   body.resizing-tree .tree-panel { pointer-events: none; }
 
-  /* ---------------- Editor ---------------- */
   .editor-shell {
     flex: 1 1 0; min-width: 220px;
     display: flex;
@@ -289,6 +275,23 @@
     box-shadow: 0 8px 30px rgba(0, 0, 0, .22);
     position: relative;
   }
+  .editor-shell.readonly {
+    box-shadow: inset 0 0 0 1px rgba(220, 220, 170, 0.35), 0 8px 30px rgba(0, 0, 0, .22);
+  }
+  .editor-shell.readonly::before {
+    content: "🔒 read-only";
+    position: absolute;
+    top: 4px; right: 14px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--warn);
+    opacity: .75;
+    z-index: 2;
+    pointer-events: none;
+    font-family: var(--mono);
+  }
+
   .gutter {
     flex: 0 0 auto; overflow: hidden;
     background: var(--gutter-bg);
@@ -299,16 +302,12 @@
   .fold-col {
     flex: 0 0 14px;
     padding: var(--pad-y) 0 var(--pad-y) 4px;
-    font-family: var(--mono);
-    font-size: 10px;
-    line-height: var(--line-height);
-    color: var(--gutter-fg);
-    text-align: center;
+    font-family: var(--mono); font-size: 10px; line-height: var(--line-height);
+    color: var(--gutter-fg); text-align: center;
     will-change: transform;
   }
   .fold-col > div {
-    height: var(--line-box);
-    line-height: var(--line-box);
+    height: var(--line-box); line-height: var(--line-box);
     cursor: default;
   }
   .fold-col > div.foldable { cursor: pointer; opacity: .55; }
@@ -317,17 +316,12 @@
   .line-numbers {
     flex: 0 0 auto;
     padding: var(--pad-y) 12px var(--pad-y) 4px;
-    font-family: var(--mono);
-    font-size: var(--font-size);
-    line-height: var(--line-height);
-    font-variant-ligatures: none;
-    color: var(--gutter-fg);
-    text-align: right;
+    font-family: var(--mono); font-size: var(--font-size); line-height: var(--line-height);
+    font-variant-ligatures: none; color: var(--gutter-fg); text-align: right;
     will-change: transform;
   }
   .line-numbers > div {
-    height: var(--line-box);
-    line-height: var(--line-box);
+    height: var(--line-box); line-height: var(--line-box);
   }
 
   .editor-area { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; }
@@ -363,28 +357,19 @@
   .editor::selection { background: var(--selection); color: transparent; }
   .editor-shell.no-guides .guides { display: none; }
 
-  /* ---------------- Autocomplete popup ---------------- */
   .ac-popup {
-    position: fixed;
-    z-index: 200;
+    position: fixed; z-index: 200;
     min-width: 200px; max-width: 340px;
-    max-height: 240px;
-    overflow-y: auto;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, .55);
-    font-family: var(--mono);
-    font-size: 12.5px;
-    scrollbar-width: thin;
+    max-height: 240px; overflow-y: auto;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; box-shadow: 0 12px 40px rgba(0, 0, 0, .55);
+    font-family: var(--mono); font-size: 12.5px; scrollbar-width: thin;
   }
   .ac-popup[hidden] { display: none; }
   .ac-item {
     display: flex; align-items: baseline; gap: 10px;
-    padding: 5px 10px;
-    cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
+    padding: 5px 10px; cursor: pointer;
+    white-space: nowrap; overflow: hidden;
   }
   .ac-item .ac-kind {
     font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px;
@@ -394,7 +379,6 @@
   .ac-item.selected { background: var(--accent); color: #fff; }
   .ac-item.selected .ac-kind { color: #c8e2f5; }
 
-  /* ---------------- Vertical splitter ---------------- */
   .splitter-v { flex: 0 0 8px; cursor: col-resize; position: relative; background: transparent; user-select: none; }
   .splitter-v::after {
     content: ""; position: absolute; left: 50%; top: 50%;
@@ -407,7 +391,6 @@
   body.resizing-v .editor-area { pointer-events: none; }
   body.resizing-v .side-panel { pointer-events: none; }
 
-  /* ---------------- Side panel ---------------- */
   .side-panel {
     flex: 0 0 42%; min-width: 240px; max-width: 75%;
     display: flex; flex-direction: column;
@@ -445,8 +428,7 @@
     padding: 12px 14px 20px;
     font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
     white-space: pre-wrap; word-break: break-word;
-    scrollbar-width: thin;
-    cursor: text;
+    scrollbar-width: thin; cursor: text;
   }
   .term-body::-webkit-scrollbar { width: 11px; height: 11px; }
   .term-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; border: 3px solid var(--bg-term); }
@@ -463,25 +445,19 @@
 
   .term-body .stack-link {
     color: var(--accent-hover);
-    text-decoration: underline;
-    text-decoration-style: dotted;
+    text-decoration: underline; text-decoration-style: dotted;
     cursor: pointer;
   }
   .term-body .stack-link:hover { background: var(--accent); color: #fff; }
 
   .term-input-row {
-    display: none;
-    align-items: baseline;
-    gap: 4px;
-    margin-top: 2px;
-    min-height: 1.55em;
+    display: none; align-items: baseline; gap: 4px;
+    margin-top: 2px; min-height: 1.55em;
   }
   .term-input-row.show { display: flex; }
   .term-input-prompt {
-    color: var(--accent-hover);
-    font-weight: 700;
-    flex: 0 0 auto;
-    font-family: var(--mono);
+    color: var(--accent-hover); font-weight: 700;
+    flex: 0 0 auto; font-family: var(--mono);
   }
   .term-input {
     flex: 1 1 auto; min-width: 0;
@@ -494,8 +470,7 @@
 
   .stdin-wrap {
     flex: 0 0 auto; display: flex; flex-direction: column;
-    border-top: 1px solid var(--border);
-    background: var(--bg-panel);
+    border-top: 1px solid var(--border); background: var(--bg-panel);
     max-height: 34%; min-height: 74px;
     transition: background .15s, border-color .15s, opacity .15s;
   }
@@ -525,8 +500,7 @@
   .stdin-wrap.cmd-mode textarea {
     flex: 0 0 auto;
     height: 22px; min-height: 22px;
-    margin: 6px 10px 8px;
-    padding: 3px 8px;
+    margin: 6px 10px 8px; padding: 3px 8px;
     font-size: 13px; line-height: 1.4;
   }
   .stdin-wrap.cmd-mode .stdin-head { border-bottom: 0; padding-top: 5px; padding-bottom: 0; }
@@ -551,7 +525,9 @@
   #statusState.saved  { color: var(--ok); }
   #statusState.dirty  { color: var(--warn); }
   #statusState.error  { color: var(--err); }
+  #statusState.readonly { color: var(--warn); }
   #statusFolder { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #statusFile { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent-hover); }
 
   .modal-backdrop {
     position: fixed; inset: 0; z-index: 300; padding: 20px;
@@ -659,7 +635,7 @@
     </div>
 
     <div class="toolbar">
-      <label class="field" for="fileName">
+      <label class="field" id="fileField" for="fileName">
         <span class="field-label">File</span>
         <input type="text" id="fileName" value="Main" spellcheck="false" autocomplete="off">
         <span class="ext">.java</span>
@@ -670,8 +646,6 @@
         <span class="field-label">Args</span>
         <input type="text" id="argsInput" placeholder="(none)" spellcheck="false" autocomplete="off">
       </label>
-
-      <button class="btn icon" id="treeBtn" type="button" title="Toggle file tree (Ctrl+B)">🗂️</button>
 
       <button class="btn folder-btn unset" id="folderBtn" type="button" title="Choose the folder where files will be saved">
         <span class="ico">📁</span>
@@ -692,10 +666,11 @@
       <button class="btn run" id="runBtn" type="button" title="Compile &amp; run interactively (Ctrl+Enter)">
         <span id="runLabel">▶ Run</span>
       </button>
-      <button class="btn run-save" id="saveRunBtn" type="button" title="Save java/ and class/ into your folder, then run interactively (Ctrl+Shift+Enter)">
+      <button class="btn run-save" id="saveRunBtn" type="button" title="Save java/, class/, files/ into your folder, then run (Ctrl+Shift+Enter)">
         <span id="saveRunLabel">💾 Save &amp; Run</span>
       </button>
 
+      <button class="btn icon" id="treeBtn" type="button" title="Toggle file tree (Ctrl+B)">☰</button>
       <button class="btn icon" id="cmdBtn" type="button" title="Toggle CMD mode">⌨ CMD</button>
 
       <input type="file" id="fileInput" accept=".java,.txt,text/plain" hidden>
@@ -706,7 +681,8 @@
     <aside class="tree-panel hidden" id="treePanel">
       <div class="tree-head">
         <span class="tree-title">Files</span>
-        <button id="treeRefresh" type="button" title="Refresh">⟳</button>
+        <button id="treeReloadFile" type="button" title="Reload current file from disk">⟲</button>
+        <button id="treeRefresh" type="button" title="Refresh tree">⟳</button>
       </div>
       <div class="tree-body" id="treeBody">
         <div class="tree-empty">Select a folder with 📁 to see files here.</div>
@@ -768,6 +744,7 @@
     <span id="statusSel"></span>
     <span id="statusLines">1 line</span>
     <span id="statusChars">0 chars</span>
+    <span id="statusFile"></span>
     <span id="statusFolder"></span>
     <span class="spacer"></span>
     <span id="statusState">Ready</span>
@@ -787,46 +764,45 @@
         <section class="tips-section">
           <h3>Editor &amp; code intelligence</h3>
           <ul class="tips-list">
-            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Space</kbd></span><span>Completion popup — Java keywords, JDK types, snippet names, and identifiers from the current buffer. Arrow keys navigate, <kbd>Enter</kbd> inserts, <kbd>Esc</kbd> closes.</span></li>
-            <li><span class="keys"><kbd>sout</kbd> + <kbd>Tab</kbd></span><span>Expands to <code>System.out.println();</code>. Also try <code>soutv</code>, <code>serr</code>, <code>psvm</code>, <code>main</code>, <code>fori</code>, <code>foreach</code>, <code>while</code>, <code>trycatch</code>.</span></li>
-            <li><span class="keys"><kbd>▶</kbd> / <kbd>▼</kbd></span><span>Fold arrows in the gutter physically collapse a <code>{ … }</code> block into one line. Click <kbd>▶</kbd> to expand.</span></li>
-            <li><span class="keys"><kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd></span><span>Indent / outdent selected lines.</span></li>
-            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>/</kbd> / <kbd>Ctrl</kbd>+<kbd>D</kbd> / <kbd>Alt</kbd>+<kbd>↑</kbd></span><span>Comment, duplicate, move line.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Space</kbd></span><span>Completion popup — Java keywords, JDK types, snippet names, and identifiers from the current buffer.</span></li>
+            <li><span class="keys"><kbd>sout</kbd> + <kbd>Tab</kbd></span><span>Expands to <code>System.out.println();</code>. Also <code>soutv</code>, <code>serr</code>, <code>psvm</code>, <code>main</code>, <code>fori</code>, <code>foreach</code>, <code>while</code>, <code>trycatch</code>.</span></li>
+            <li><span class="keys"><kbd>▶</kbd> / <kbd>▼</kbd></span><span>Fold arrows in the gutter collapse a <code>{ … }</code> block into a one-line summary.</span></li>
           </ul>
         </section>
 
         <section class="tips-section">
-          <h3>File tree &amp; stack traces</h3>
+          <h3>File tree — multi-file editing</h3>
           <ul class="tips-list">
-            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>B</kbd> / 🗂️</span><span>Toggle the file tree. It shows the contents of your chosen folder. Click a <code>.java</code> file to open it in the editor.</span></li>
-            <li><span class="keys"><kbd>☕</kbd></span><span>Java source files. <code>⚙</code> marks <code>.class</code> files, <code>📁</code> folders.</span></li>
-            <li><span class="keys"><kbd>link</kbd></span><span>Stack traces like <code>at Main.main(<u>Main.java:8</u>)</code> are clickable — they open the file and jump to that line.</span></li>
+            <li><span class="keys"><kbd>☕</kbd></span><span>Any <code>.java</code> file opens for editing. Files re-read from disk every time you switch to them, unless they have unsaved changes.</span></li>
+            <li><span class="keys"><kbd>📄</kbd></span><span>Text files in <code>files/</code> are editable. Save writes back to the same path.</span></li>
+            <li><span class="keys"><kbd>⚙</kbd></span><span><code>.class</code> files and binary files open as a read-only hex dump with a 🔒 badge.</span></li>
+            <li><span class="keys"><kbd>⟲</kbd></span><span>Reload the currently open file from disk — useful when an external tool changed it.</span></li>
+            <li><span class="keys"><kbd>focus</kbd></span><span>The tree refreshes automatically when the tab regains focus, and the open file reloads if you had no unsaved edits.</span></li>
           </ul>
         </section>
 
         <section class="tips-section">
-          <h3>Run &amp; interact</h3>
+          <h3>Run &amp; files folder</h3>
           <ul class="tips-list">
             <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span><span><strong>Run</strong> — compile and run interactively.</span></li>
-            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span><span><strong>Save &amp; Run</strong> — writes <code>java/</code> and <code>class/</code> first, then runs.</span></li>
-            <li><span class="keys"><kbd>Terminal</kbd></span><span>While a program runs, click the terminal and type. Input appears on the same line as the program's prompt.</span></li>
-            <li><span class="keys"><kbd>■ Stop</kbd></span><span>The Run button turns red while executing — click to kill.</span></li>
+            <li><span class="keys"><kbd>files/</kbd></span><span>Any file your program creates or reads with a relative path (like <code>example.bin</code>) lives in <code>&lt;folder&gt;/files/</code> and survives across runs.</span></li>
+            <li><span class="keys"><kbd>Terminal</kbd></span><span>While a program runs, click the terminal and type. Input appears inline.</span></li>
           </ul>
         </section>
 
         <section class="tips-section">
           <h3>CMD mode</h3>
           <ul class="tips-list">
-            <li><span class="keys"><kbd>⌨ CMD</kbd></span><span>Folder-aware prompt. Commands act on your chosen folder.</span></li>
             <li><span class="keys"><kbd>push</kbd></span><span>Saves the editor into <code>&lt;folder&gt;/java/</code>.</span></li>
             <li><span class="keys"><kbd>javac</kbd></span><span><code>javac Main.java</code> → <code>&lt;folder&gt;/class/Main.class</code>.</span></li>
-            <li><span class="keys"><kbd>java</kbd></span><span><code>java Main arg1 arg2</code> — runs interactively.</span></li>
+            <li><span class="keys"><kbd>java</kbd></span><span><code>java Main arg1 arg2</code> — runs interactively. Uses <code>files/</code> as the working directory.</span></li>
+            <li><span class="keys"><kbd>ls</kbd> <kbd>pwd</kbd> <kbd>cat</kbd> <kbd>echo</kbd> <kbd>cls</kbd> <kbd>help</kbd></span><span>Other commands.</span></li>
           </ul>
         </section>
 
         <div class="tips-note">
           <span class="emoji">💡</span>
-          <strong>Tip:</strong> Everything — code, folder, tree width, args, theme, font size, mode, folds, and stdin buffer — is remembered locally.
+          <strong>Tip:</strong> Code, folder, args, theme, folds, mode, and the last opened file are all remembered locally.
         </div>
 
       </div>
@@ -852,6 +828,7 @@
   const bracketB      = document.getElementById('bracketB');
   const editorShell   = document.getElementById('editorShell');
   const fileNameInput = document.getElementById('fileName');
+  const fileField     = document.getElementById('fileField');
   const argsInput     = document.getElementById('argsInput');
   const autoBadge     = document.getElementById('autoBadge');
   const fileInput     = document.getElementById('fileInput');
@@ -861,6 +838,7 @@
   const statusChars   = document.getElementById('statusChars');
   const statusState   = document.getElementById('statusState');
   const statusFolder  = document.getElementById('statusFolder');
+  const statusFile    = document.getElementById('statusFile');
   const themeBtn      = document.getElementById('themeBtn');
   const guidesBtn     = document.getElementById('guidesBtn');
   const folderBtn     = document.getElementById('folderBtn');
@@ -897,6 +875,7 @@
   const treeBody      = document.getElementById('treeBody');
   const treeBtn       = document.getElementById('treeBtn');
   const treeRefresh   = document.getElementById('treeRefresh');
+  const treeReloadFile = document.getElementById('treeReloadFile');
   const splitterTree  = document.getElementById('splitterTree');
   const acPopup       = document.getElementById('acPopup');
 
@@ -909,6 +888,12 @@
   const DB_NAME      = 'java-web-editor';
   const DB_STORE     = 'handles';
   const DIR_KEY      = 'saveDirectory';
+
+  const TEXT_EXT = new Set([
+    'txt', 'md', 'markdown', 'csv', 'tsv', 'json', 'xml', 'html', 'htm',
+    'css', 'js', 'ts', 'log', 'properties', 'yml', 'yaml', 'ini', 'cfg',
+    'sh', 'bat', 'ps1', 'sql', 'java', 'kt', 'scala', 'groovy'
+  ]);
 
   const DEFAULT_CODE =
     'import java.util.Scanner;\n\n' +
@@ -978,11 +963,17 @@
   let treeVisible = false;
   let treeBasis = 240;
 
-  /* fold state */
+  /* Paths of folders currently expanded in the tree. Survives rebuilds so
+     the tree doesn't collapse when the server pushes new files. */
+  const expandedFolders = new Set();
+
+  /* multi-file state */
+  let currentFilePath = null;
+  const openFiles = new Map();
+
   const foldRegistry = new Map();
   let foldCounter = 0;
 
-  /* autocomplete state */
   let acVisible = false;
   let acItems = [];
   let acIndex = 0;
@@ -1043,6 +1034,7 @@
   function syncFileNameFromCode() {
     updateAutoBadge();
     if (userEditedFileName) return;
+    if (currentFilePath) return;
     const detected = detectMainClassName(getFullSource());
     if (detected && fileNameInput.value !== detected) {
       fileNameInput.value = detected;
@@ -1195,8 +1187,62 @@
   }
 
   /* ================================================================
-   *  Folder helpers
+   *  Hex dump for binary / .class files
    * ================================================================ */
+  function isBinary(bytes) {
+    const checkLen = Math.min(bytes.length, 4096);
+    for (let i = 0; i < checkLen; i++) {
+      if (bytes[i] === 0) return true;
+    }
+    return false;
+  }
+
+  function hexDump(bytes, relPath, size) {
+    const lines = [];
+    const name = relPath.split('/').pop();
+    lines.push('// Binary file: ' + relPath);
+    lines.push('// Size: ' + size + ' byte' + (size === 1 ? '' : 's'));
+    if (name.endsWith('.class')) lines.push('// (Java compiled bytecode — read-only preview)');
+    lines.push('');
+
+    const maxBytes = Math.min(bytes.length, 64 * 1024);
+    const bytesPerLine = 16;
+
+    for (let i = 0; i < maxBytes; i += bytesPerLine) {
+      const chunk = bytes.subarray(i, Math.min(i + bytesPerLine, maxBytes));
+      const hexParts = [];
+      const asciiParts = [];
+      for (let j = 0; j < bytesPerLine; j++) {
+        if (j < chunk.length) {
+          const b = chunk[j];
+          hexParts.push(b.toString(16).padStart(2, '0'));
+          asciiParts.push(b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : '.');
+        } else {
+          hexParts.push('  ');
+          asciiParts.push(' ');
+        }
+      }
+      const addr = i.toString(16).padStart(8, '0');
+      const hex  = hexParts.slice(0, 8).join(' ') + '  ' + hexParts.slice(8).join(' ');
+      const ascii = asciiParts.join('');
+      lines.push(addr + '  ' + hex + '  |' + ascii + '|');
+    }
+
+    if (bytes.length > maxBytes) {
+      lines.push('');
+      lines.push('// ... truncated at ' + maxBytes + ' bytes (' + bytes.length + ' total)');
+    }
+    return lines.join('\n');
+  }
+
+  /* ================================================================
+   *  File System Access helpers
+   * ================================================================ */
+  async function getDirAtPath(parts, create) {
+    let dir = dirHandle;
+    for (const p of parts) dir = await dir.getDirectoryHandle(p, { create: !!create });
+    return dir;
+  }
   async function ensureDirChain(root, parts) {
     let dir = root;
     for (const p of parts) dir = await dir.getDirectoryHandle(p, { create: true });
@@ -1220,6 +1266,54 @@
     await w.write(bytes);
     await w.close();
   }
+
+  /* files/ — persistent user data */
+  async function ensureWorkFolders() {
+    if (!dirHandle) return;
+    try {
+      await dirHandle.getDirectoryHandle('java',  { create: true });
+      await dirHandle.getDirectoryHandle('class', { create: true });
+      await dirHandle.getDirectoryHandle('files', { create: true });
+    } catch (_) {}
+  }
+  async function readFilesFolder() {
+    const out = [];
+    if (!dirHandle) return out;
+    let filesDir;
+    try { filesDir = await dirHandle.getDirectoryHandle('files'); }
+    catch (_) { return out; }
+    await walkFilesDir(filesDir, '', out);
+    return out;
+  }
+  async function walkFilesDir(dir, prefix, out) {
+    for await (const [name, handle] of dir.entries()) {
+      const rel = prefix ? prefix + '/' + name : name;
+      if (handle.kind === 'file') {
+        const file  = await handle.getFile();
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        out.push({ name: rel, data: bytesToBase64(bytes) });
+      } else {
+        await walkFilesDir(handle, rel, out);
+      }
+    }
+  }
+  async function writeFilesFolder(files) {
+    if (!dirHandle || !files || !files.length) return;
+    const filesDir = await dirHandle.getDirectoryHandle('files', { create: true });
+    for (const f of files) {
+      if (!f || typeof f.name !== 'string' || typeof f.data !== 'string') continue;
+      const parts = f.name.split('/');
+      const fname = parts.pop();
+      let dir = filesDir;
+      for (const p of parts) dir = await dir.getDirectoryHandle(p, { create: true });
+      const fh = await dir.getFileHandle(fname, { create: true });
+      const w  = await fh.createWritable();
+      await w.write(base64ToBytes(f.data));
+      await w.close();
+    }
+    if (treeVisible) buildTree();
+  }
+
   async function persistArtifacts(data, code) {
     const className = data.className || detectMainClassName(code) || 'Main';
     const pkg       = data.packageName || null;
@@ -1244,9 +1338,153 @@
   }
 
   /* ================================================================
+   *  Read a file for the editor
+   * ================================================================ */
+  async function readFileForEditor(relPath) {
+    const parts = relPath.split('/');
+    const fname = parts.pop();
+    const dir   = await getDirAtPath(parts, false);
+    const fh    = await dir.getFileHandle(fname);
+    const file  = await fh.getFile();
+    const bytes = new Uint8Array(await file.arrayBuffer());
+
+    const ext = (fname.match(/\.([^.]+)$/) || [null, ''])[1].toLowerCase();
+    const isClass       = ext === 'class';
+    const inClassFolder = relPath === 'class' || relPath.startsWith('class/');
+
+    /* Anything under class/ or with a .class extension → read-only hex dump */
+    if (isClass || inClassFolder) {
+      const dump = hexDump(bytes, relPath, file.size);
+      return {
+        content: dump, savedContent: dump,
+        readOnly: true, kind: 'binary',
+        selStart: 0, selEnd: 0, scrollTop: 0, scrollLeft: 0
+      };
+    }
+
+    /* Real binary content (contains NUL) → read-only hex dump */
+    if (isBinary(bytes)) {
+      const dump = hexDump(bytes, relPath, file.size);
+      return {
+        content: dump, savedContent: dump,
+        readOnly: true, kind: 'binary',
+        selStart: 0, selEnd: 0, scrollTop: 0, scrollLeft: 0
+      };
+    }
+
+    /* Everything else is editable text */
+    const text = new TextDecoder('utf-8').decode(bytes).replace(/\r\n?/g, '\n');
+    return {
+      content: text, savedContent: text,
+      readOnly: false, kind: 'text',
+      selStart: 0, selEnd: 0, scrollTop: 0, scrollLeft: 0
+    };
+  }
+
+  /* ================================================================
+   *  Open / switch file
+   * ================================================================ */
+  function captureCurrentBuffer() {
+    if (!currentFilePath) return;
+    const entry = openFiles.get(currentFilePath);
+    if (!entry) return;
+    entry.content     = editor.value;
+    entry.selStart    = editor.selectionStart;
+    entry.selEnd      = editor.selectionEnd;
+    entry.scrollTop   = editor.scrollTop;
+    entry.scrollLeft  = editor.scrollLeft;
+  }
+
+  async function openFile(relPath) {
+    if (!dirHandle) { setStateMessage('Select a folder first.', 'error'); return; }
+    if (relPath === currentFilePath) return;
+
+    captureCurrentBuffer();
+
+    /* Keep unsaved edits in memory — don't clobber with disk version. */
+    const cached = openFiles.get(relPath);
+    if (cached && !cached.readOnly && cached.content !== cached.savedContent) {
+      applyOpenFile(relPath, cached);
+      setStateMessage('Opened ' + relPath + ' (unsaved changes kept)', 'dirty');
+      return;
+    }
+
+    /* Otherwise, always read fresh from disk. */
+    setStateMessage('Opening ' + relPath + '…', 'saved');
+    try {
+      const entry = await readFileForEditor(relPath);
+      openFiles.set(relPath, entry);
+      applyOpenFile(relPath, entry);
+      setStateMessage('Opened ' + relPath + (entry.readOnly ? ' (read-only)' : ''), 'saved');
+    } catch (err) {
+      setStateMessage('Could not open ' + relPath + ': ' + err.message, 'error');
+    }
+  }
+
+  function applyOpenFile(relPath, entry) {
+    currentFilePath = relPath;
+
+    /* Auto-expand every ancestor folder so the file is visible in the tree. */
+    const parts = relPath.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      expandedFolders.add(parts.slice(0, i).join('/'));
+    }
+    if (treeVisible) buildTree();
+    foldRegistry.clear();
+    _braceSrc = null;
+    maskCacheSrc = null;
+
+    editor.value = entry.content;
+    editor.readOnly = entry.readOnly;
+    editorShell.classList.toggle('readonly', entry.readOnly);
+
+    const baseName = relPath.split('/').pop().replace(/\.[^.]+$/, '');
+    fileNameInput.value = baseName;
+    fileNameInput.disabled = true;
+    fileField.classList.add('disabled');
+    fileField.title = 'File name is fixed while a specific file is open. Use the tree to switch files.';
+    userEditedFileName = true;
+    autoBadge.hidden = true;
+
+    statusFile.textContent = '📄 ' + relPath + (entry.readOnly ? ' 🔒' : '');
+
+    queueRender();
+    refreshDirty();
+
+    setTimeout(() => {
+      editor.selectionStart = entry.selStart != null ? entry.selStart : 0;
+      editor.selectionEnd   = entry.selEnd   != null ? entry.selEnd   : 0;
+      editor.scrollTop      = entry.scrollTop  || 0;
+      editor.scrollLeft     = entry.scrollLeft || 0;
+      syncScroll();
+      updateStatus();
+      updateOverlays();
+      if (!entry.readOnly) { try { editor.focus(); } catch (_) {} }
+    }, 0);
+
+    saveSoon();
+  }
+
+  function closeCurrentFile() {
+    currentFilePath = null;
+    fileNameInput.disabled = false;
+    fileField.classList.remove('disabled');
+    fileField.title = '';
+    statusFile.textContent = '';
+    editor.readOnly = false;
+    editorShell.classList.remove('readonly');
+    userEditedFileName = false;
+    updateAutoBadge();
+  }
+
+  /* ================================================================
    *  File tree
    * ================================================================ */
   async function buildTree() {
+    /* Snapshot scroll position and current highlight so the rebuild feels
+       seamless. */
+    const prevScrollTop = treeBody.scrollTop;
+
     treeBody.replaceChildren();
     if (!dirHandle) {
       const d = document.createElement('div');
@@ -1258,12 +1496,29 @@
     try {
       const children = await listTreeChildren(dirHandle, '');
       for (const c of children) treeBody.appendChild(c);
+
+      if (currentFilePath) {
+        const row = treeBody.querySelector('.tree-row[data-path="' + cssEscape(currentFilePath) + '"]');
+        if (row) row.classList.add('active');
+      }
     } catch (e) {
       const d = document.createElement('div');
       d.className = 'tree-empty';
       d.textContent = 'Could not read folder: ' + e.message;
       treeBody.appendChild(d);
     }
+
+    /* Restore scroll position (clamped to the new content height). */
+    requestAnimationFrame(() => {
+      treeBody.scrollTop = Math.min(
+        prevScrollTop,
+        treeBody.scrollHeight - treeBody.clientHeight
+      );
+    });
+  }
+
+  function cssEscape(s) {
+    return String(s).replace(/"/g, '\\"');
   }
 
   async function listTreeChildren(dir, relPath) {
@@ -1286,12 +1541,18 @@
     const fullPath = parentPath ? parentPath + '/' + name : name;
     const isDir = handle.kind === 'directory';
     const depth = fullPath.split('/').length - 1;
+    const ext = (name.match(/\.([^.]+)$/) || [null, ''])[1].toLowerCase();
+
+    const inClassFolder = fullPath === 'class' || fullPath.startsWith('class/');
+    const isClass = ext === 'class';
+    const knownText = TEXT_EXT.has(ext);
+    const preReadOnly = !isDir && (isClass || inClassFolder);
 
     const wrap = document.createElement('div');
     wrap.className = 'tree-node';
 
     const row = document.createElement('div');
-    row.className = 'tree-row';
+    row.className = 'tree-row' + (preReadOnly ? ' ro' : '');
     row.dataset.path = fullPath;
     row.style.paddingLeft = (4 + depth * 12) + 'px';
 
@@ -1303,8 +1564,8 @@
     const icon = document.createElement('span');
     icon.className = 'tree-icon';
     if (isDir) icon.textContent = '📁';
-    else if (name.endsWith('.java')) icon.textContent = '☕';
-    else if (name.endsWith('.class')) icon.textContent = '⚙';
+    else if (ext === 'java') icon.textContent = '☕';
+    else if (ext === 'class') icon.textContent = '⚙';
     else icon.textContent = '📄';
     row.appendChild(icon);
 
@@ -1337,53 +1598,42 @@
         }
       };
 
-      const toggleOpen = async (ev) => {
-        if (ev) ev.stopPropagation();
-        const open = childBox.style.display !== 'none';
+      /* Central place to open/close that also updates expandedFolders. */
+      const setOpen = async (open) => {
         if (open) {
+          await loadChildren();
+          childBox.style.display = 'block';
+          toggle.textContent = '▼';
+          expandedFolders.add(fullPath);
+        } else {
           childBox.style.display = 'none';
           toggle.textContent = '▶';
-          return;
+          expandedFolders.delete(fullPath);
         }
-        toggle.textContent = '▼';
-        await loadChildren();
-        childBox.style.display = 'block';
       };
+
+      const toggleOpen = async (ev) => {
+        if (ev) ev.stopPropagation();
+        const isOpen = childBox.style.display !== 'none';
+        await setOpen(!isOpen);
+      };
+
       toggle.addEventListener('click', toggleOpen);
       row.addEventListener('click', () => toggleOpen());
+
+      /* Re-open the folder if it was open before the last rebuild. */
+      if (expandedFolders.has(fullPath)) {
+        await setOpen(true);
+      }
     } else {
       row.addEventListener('click', () => {
         treeBody.querySelectorAll('.tree-row.active').forEach(el => el.classList.remove('active'));
         row.classList.add('active');
-        if (name.endsWith('.java')) {
-          openTreeFile(fullPath);
-        } else {
-          setStateMessage(name + ' is not a Java source file.', 'error');
-        }
+        openFile(fullPath);
       });
     }
 
     return wrap;
-  }
-
-  async function openTreeFile(relPath) {
-    try {
-      const text = await readFolderFile(relPath);
-      foldRegistry.clear();
-      editor.value = text.replace(/\r\n?/g, '\n');
-      userEditedFileName = true;
-      const baseName = relPath.split('/').pop().replace(/\.java$/i, '');
-      fileNameInput.value = baseName || 'Main';
-      editor.focus();
-      editor.setSelectionRange(0, 0);
-      editor.scrollTop = 0;
-      markSaved();
-      queueRender();
-      saveState();
-      setStateMessage('Opened ' + relPath, 'saved');
-    } catch (e) {
-      setStateMessage('Could not open ' + relPath + ': ' + e.message, 'error');
-    }
   }
 
   function toggleTree(force) {
@@ -1401,6 +1651,25 @@
 
   treeBtn.addEventListener('click', () => toggleTree());
   treeRefresh.addEventListener('click', () => buildTree());
+
+  treeReloadFile.addEventListener('click', async () => {
+    if (!currentFilePath || !dirHandle) {
+      setStateMessage('No file open to reload.', 'error');
+      return;
+    }
+    const entry = openFiles.get(currentFilePath);
+    if (entry && !entry.readOnly && editor.value !== entry.savedContent) {
+      if (!confirm('You have unsaved changes. Discard them and reload from disk?')) return;
+    }
+    try {
+      const fresh = await readFileForEditor(currentFilePath);
+      openFiles.set(currentFilePath, fresh);
+      applyOpenFile(currentFilePath, fresh);
+      setStateMessage('Reloaded ' + currentFilePath, 'saved');
+    } catch (e) {
+      setStateMessage('Reload failed: ' + e.message, 'error');
+    }
+  });
 
   (function () {
     let dragging = false;
@@ -1434,52 +1703,39 @@
   /* ================================================================
    *  Stack-trace navigation
    * ================================================================ */
-  async function findFileInFolder(root, relPath) {
-    const parts = relPath.split('/');
-    let dir = root;
-    for (let i = 0; i < parts.length - 1; i++) {
-      try { dir = await dir.getDirectoryHandle(parts[i]); } catch { return null; }
-    }
-    try { return await dir.getFileHandle(parts[parts.length - 1]); } catch { return null; }
-  }
-
   async function navigateToFileLine(fileName, lineNo) {
     if (!dirHandle) { setStateMessage('No folder selected.', 'error'); return; }
-    let fh = await findFileInFolder(dirHandle, 'java/' + fileName);
-    if (!fh) fh = await findFileInFolder(dirHandle, fileName);
-    if (!fh) { setStateMessage('Could not find ' + fileName + ' in your folder.', 'error'); return; }
-    try {
-      const f = await fh.getFile();
-      const text = await f.text();
-      foldRegistry.clear();
-      editor.value = text.replace(/\r\n?/g, '\n');
-      userEditedFileName = true;
-      fileNameInput.value = fileName.replace(/\.java$/i, '');
-      markSaved();
-      queueRender();
-      jumpToLine(lineNo);
-      setStateMessage('Opened ' + fileName + ':' + lineNo, 'saved');
-    } catch (e) {
-      setStateMessage('Could not open ' + fileName + ': ' + e.message, 'error');
+    for (const rel of ['java/' + fileName, fileName, 'files/' + fileName]) {
+      try {
+        const parts = rel.split('/');
+        const fname = parts.pop();
+        let dir = dirHandle;
+        for (const p of parts) dir = await dir.getDirectoryHandle(p);
+        await dir.getFileHandle(fname);
+        await openFile(rel);
+        jumpToLine(lineNo);
+        setStateMessage('Opened ' + fileName + ':' + lineNo, 'saved');
+        return;
+      } catch (_) {}
     }
+    setStateMessage('Could not find ' + fileName + ' in your folder.', 'error');
   }
 
   /* ================================================================
-   *  Masking (used by folding, bracket match, identifiers)
+   *  Masking
    * ================================================================ */
   let maskCacheSrc = null;
   let maskCache    = '';
 
   function maskCode(code) {
     return code
-      /* Blank whole lines that carry a fold marker, so any `{` or `}` in the
-         rendered placeholder never confuses the brace scanner. */
       .replace(/^.*\/\*@[A-Za-z0-9_]+@\*\/.*$/gm, m => ' '.repeat(m.length))
       .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
       .replace(/\/\/[^\n]*/g,        m => ' '.repeat(m.length))
       .replace(/"(?:\\.|[^"\\\n])*"/g, m => ' '.repeat(m.length))
       .replace(/'(?:\\.|[^'\\\n])*'/g, m => ' '.repeat(m.length));
-  }  function getMaskedSrc() {
+  }
+  function getMaskedSrc() {
     const v = editor.value;
     if (maskCacheSrc === v) return maskCache;
     maskCacheSrc = v;
@@ -1489,11 +1745,6 @@
 
   /* ================================================================
    *  Folding
-   *
-   *  Fold markers look like:
-   *      //@FOLD@<id>@  N lines
-   *  The original lines live in foldRegistry[id]. getFullSource()
-   *  expands them recursively, so nested folds work.
    * ================================================================ */
   function newFoldId() {
     foldCounter++;
@@ -1503,7 +1754,6 @@
 
   function getFoldId(line) {
     if (!line) return null;
-    /* The marker is a trailing inline comment: ... /*@<id>@*\/ */
     const m = line.match(/\/\*@([A-Za-z0-9_]+)@\*\/\s*$/);
     if (!m) return null;
     return foldRegistry.has(m[1]) ? m[1] : null;
@@ -1533,10 +1783,6 @@
     return map;
   }
 
-  /** Builds the visible one-line summary for a folded block, e.g.
-   *    "  public class Main { … }  /*@f1_a3b4c5@*\/"
-   *  The marker at the end is what getFoldId() uses to find the entry in
-   *  foldRegistry. The middle part is purely for humans. */
   function makeFoldPlaceholder(startLineText, id) {
     const indent = (startLineText.match(/^[ \t]*/) || [''])[0];
     let decl = startLineText.slice(indent.length).replace(/\/\/.*$/, '').trim();
@@ -1549,8 +1795,9 @@
 
     return indent + decl + ' … }  /*@' + id + '@*/';
   }
-  
+
   function applyFold(startLine) {
+    if (editor.readOnly) return;
     const view = editor.value;
     const braceMap = getBraceMap(view);
     const endLine = braceMap.get(startLine);
@@ -1659,6 +1906,7 @@
     const lines = view.split('\n');
     const braceMap = getBraceMap(view);
     const frag = document.createDocumentFragment();
+    const readOnly = editor.readOnly;
 
     for (let i = 0; i < lines.length; i++) {
       const d = document.createElement('div');
@@ -1673,7 +1921,7 @@
           ev.preventDefault(); ev.stopPropagation();
           removeFold(captured);
         });
-      } else if (braceMap.has(i)) {
+      } else if (braceMap.has(i) && !readOnly) {
         d.className = 'foldable';
         d.textContent = '▼';
         d.title = 'Fold block';
@@ -1799,6 +2047,7 @@
   }
 
   function openAC() {
+    if (editor.readOnly) return;
     const v = editor.value;
     const s = editor.selectionStart;
     const before = v.slice(0, s);
@@ -2083,10 +2332,15 @@
       setStateMessage('Write permission was denied for that folder', 'error');
       return false;
     }
+    currentFilePath = null;
+    openFiles.clear();
+
     dirHandle = handle;
     dirNeedsPermission = false;
     try { await idbSet(DIR_KEY, handle); } catch (_) {}
+    await ensureWorkFolders();
     updateFolderUI();
+    closeCurrentFile();
     if (treeVisible) buildTree();
     setStateMessage('Folder set: ' + handle.name, 'saved');
     return true;
@@ -2094,8 +2348,11 @@
   async function forgetFolder() {
     dirHandle = null;
     dirNeedsPermission = false;
+    currentFilePath = null;
+    openFiles.clear();
     await idbDelete(DIR_KEY);
     updateFolderUI();
+    closeCurrentFile();
     if (treeVisible) buildTree();
   }
   async function restoreFolder() {
@@ -2106,6 +2363,7 @@
         dirHandle = handle;
         dirNeedsPermission = !(await hasPermission(handle));
         updateFolderUI();
+        if (!dirNeedsPermission) await ensureWorkFolders();
         if (treeVisible) buildTree();
         return;
       }
@@ -2114,7 +2372,7 @@
   }
 
   /* ================================================================
-   *  Single-file Save
+   *  Save
    * ================================================================ */
   function currentFileName() {
     const raw = (fileNameInput.value || '').trim().replace(/\.java$/i, '');
@@ -2140,6 +2398,63 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function save(forcePicker) {
+    /* specific file open → save to that path */
+    if (currentFilePath && !forcePicker) {
+      const entry = openFiles.get(currentFilePath);
+      if (entry && entry.readOnly) {
+        setStateMessage('Cannot save — file is read-only', 'error');
+        return;
+      }
+      if (dirHandle) {
+        try {
+          const parts = currentFilePath.split('/');
+          const fname = parts.pop();
+          let dir = dirHandle;
+          for (const p of parts) dir = await dir.getDirectoryHandle(p);
+
+          const fh = await dir.getFileHandle(fname, { create: true });
+
+          /* Sanity check permission before opening a writable stream */
+          if (typeof fh.queryPermission === 'function') {
+            const perm = await fh.queryPermission({ mode: 'readwrite' });
+            if (perm !== 'granted') {
+              const req = typeof fh.requestPermission === 'function'
+                ? await fh.requestPermission({ mode: 'readwrite' })
+                : 'denied';
+              if (req !== 'granted') {
+                setStateMessage('Write permission was denied for ' + currentFilePath, 'error');
+                return;
+              }
+            }
+          }
+
+          const w = await fh.createWritable();
+          await w.write(editor.value);
+          await w.close();      /* resolves when the data has been flushed */
+
+          /* Read back to confirm the write actually landed */
+          try {
+            const check  = await fh.getFile();
+            const text   = await check.text();
+            const wanted = editor.value;
+            if (text.replace(/\r\n?/g, '\n') !== wanted.replace(/\r\n?/g, '\n')) {
+              termWrite('⚠ Saved, but the file on disk differs (line-ending normalisation).\n', 'note');
+            }
+          } catch (_) {}
+
+          if (entry) entry.savedContent = editor.value;
+          markSaved();
+          setStateMessage('Saved ' + currentFilePath, 'saved');
+          if (treeVisible) buildTree();
+          return;
+        } catch (err) {
+          setStateMessage('Could not save: ' + err.message, 'error');
+          return;
+        }
+      }
+    }
+
+    /* scratch mode */
     const name = currentFileName();
     const code = getFullSource();
 
@@ -2154,7 +2469,8 @@
         if (granted) {
           try {
             await writeToFolder(dirHandle, name, code);
-            markSaved();
+            lastSavedText = code;
+            refreshDirty();
             setStateMessage('Saved to ' + dirHandle.name + '/' + name, 'saved');
             if (treeVisible) buildTree();
             return;
@@ -2183,7 +2499,8 @@
         const writable = await handle.createWritable();
         await writable.write(code);
         await writable.close();
-        markSaved();
+        lastSavedText = code;
+        refreshDirty();
         setStateMessage('Saved ' + handle.name, 'saved');
         return;
       } catch (err) {
@@ -2192,7 +2509,8 @@
     }
 
     downloadViaAnchor(name, code);
-    markSaved();
+    lastSavedText = code;
+    refreshDirty();
     setStateMessage('Downloaded ' + name, 'saved');
   }
 
@@ -2404,11 +2722,31 @@
     clearTimeout(messageTimer);
     messageTimer = setTimeout(() => { statusState.className = ''; refreshDirty(); }, 2200);
   }
-  function markSaved() { lastSavedText = getFullSource(); refreshDirty(); }
+  function markSaved() {
+    if (currentFilePath && openFiles.has(currentFilePath)) {
+      openFiles.get(currentFilePath).savedContent = editor.value;
+    } else {
+      lastSavedText = getFullSource();
+    }
+    refreshDirty();
+  }
   function refreshDirty() {
     if (messageTimer && statusState.className) return;
-    if (lastSavedText === null) { statusState.textContent = 'Ready'; statusState.className = ''; return; }
-    const dirty = getFullSource() !== lastSavedText;
+
+    let dirty;
+    if (currentFilePath && openFiles.has(currentFilePath)) {
+      const entry = openFiles.get(currentFilePath);
+      if (entry.readOnly) {
+        statusState.textContent = 'Read-only preview';
+        statusState.className   = 'readonly';
+        return;
+      }
+      dirty = editor.value !== entry.savedContent;
+    } else {
+      if (lastSavedText === null) { statusState.textContent = 'Ready'; statusState.className = ''; return; }
+      dirty = getFullSource() !== lastSavedText;
+    }
+
     statusState.textContent = dirty ? '● Unsaved changes' : 'All changes saved';
     statusState.className   = dirty ? 'dirty' : 'saved';
   }
@@ -2417,6 +2755,7 @@
    *  Edit helper
    * ================================================================ */
   function applyEdit(start, end, text, selStart, selEnd) {
+    if (editor.readOnly) return;
     if (start === end && text === '') return;
     editor.focus();
     editor.setSelectionRange(start, end);
@@ -2562,6 +2901,7 @@
    * ================================================================ */
   editor.addEventListener('keydown', e => {
     if (e.isComposing) return;
+    if (editor.readOnly) return;
 
     if (acVisible) {
       if (e.key === 'ArrowDown') { e.preventDefault(); acIndex = Math.min(acItems.length - 1, acIndex + 1); renderAC(); return; }
@@ -2658,12 +2998,44 @@
     updateOverlays();
     if (acVisible) positionAC();
   });
+
+  window.addEventListener('focus', async () => {
+    if (!dirHandle) return;
+    if (treeVisible) buildTree();
+
+    if (currentFilePath) {
+      const entry = openFiles.get(currentFilePath);
+      const hasUnsaved = entry && !entry.readOnly && editor.value !== entry.savedContent;
+      if (!hasUnsaved && !editor.readOnly) {
+        try {
+          const fresh = await readFileForEditor(currentFilePath);
+          if (fresh.content !== editor.value) {
+            openFiles.set(currentFilePath, fresh);
+            applyOpenFile(currentFilePath, fresh);
+            setStateMessage('Reloaded ' + currentFilePath + ' (changed on disk)', 'saved');
+          }
+        } catch (_) {}
+      }
+    }
+  });
+
   window.addEventListener('beforeunload', e => {
-    if (lastSavedText !== null && getFullSource() !== lastSavedText) { e.preventDefault(); e.returnValue = ''; }
+    let hasUnsaved = false;
+    if (currentFilePath && openFiles.has(currentFilePath)) {
+      const entry = openFiles.get(currentFilePath);
+      if (!entry.readOnly && editor.value !== entry.savedContent) hasUnsaved = true;
+    } else if (lastSavedText !== null && getFullSource() !== lastSavedText) {
+      hasUnsaved = true;
+    }
+    for (const [path, entry] of openFiles) {
+      if (path === currentFilePath) continue;
+      if (!entry.readOnly && entry.content !== entry.savedContent) hasUnsaved = true;
+    }
+    if (hasUnsaved) { e.preventDefault(); e.returnValue = ''; }
   });
 
   /* ================================================================
-   *  Generic run over WebSocket
+   *  Run pipeline
    * ================================================================ */
   async function startRun(opts) {
     if (running) return;
@@ -2704,6 +3076,12 @@
     inputHint.textContent = '— type in the terminal above ↑';
     closeAC();
 
+    let initialUserFiles = [];
+    if (dirHandle && CAN_PICK_DIR) {
+      try { initialUserFiles = await readFilesFolder(); }
+      catch (_) {}
+    }
+
     if (opts.label) {
       writeLine(opts.label, 'meta');
     } else if (opts.classFiles) {
@@ -2739,8 +3117,9 @@
       } else {
         startMsg.code = opts.code;
       }
-      startMsg.stdin  = presetStdin;
-      startMsg.args   = opts.args || [];
+      startMsg.stdin     = presetStdin;
+      startMsg.args      = opts.args || [];
+      startMsg.userFiles = initialUserFiles;
       startMsg.wantClassFiles = !!opts.saveArtifacts;
       ws.send(JSON.stringify(startMsg));
     };
@@ -2761,6 +3140,18 @@
       if (msg.type === 'stderr') { termWrite(msg.data, 'stderr'); return; }
       if (msg.type === 'note')   { termWrite(msg.data, 'note');   return; }
       if (msg.type === 'error')  { termWrite('✖ ' + msg.error + '\n', 'stderr'); return; }
+
+      if (msg.type === 'userFiles') {
+        if (dirHandle) {
+          try {
+            await writeFilesFolder(msg.files);
+            if (msg.files.length) termWrite('✓ Saved  files/ (' + msg.files.length + ' file' + (msg.files.length === 1 ? '' : 's') + ')\n', 'ok');
+          } catch (err) {
+            termWrite('✖ Could not persist files/: ' + err.message + '\n', 'stderr');
+          }
+        }
+        return;
+      }
 
       if (msg.type === 'classFiles') {
         if (opts.saveArtifacts && dirHandle) {
@@ -3073,6 +3464,14 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
+      captureCurrentBuffer();
+      currentFilePath = null;
+      fileNameInput.disabled = false;
+      fileField.classList.remove('disabled');
+      statusFile.textContent = '';
+      editor.readOnly = false;
+      editorShell.classList.remove('readonly');
+
       foldRegistry.clear();
       editor.value = String(reader.result).replace(/\r\n?/g, '\n');
       userEditedFileName = true;
@@ -3101,7 +3500,17 @@
   });
 
   document.getElementById('clearBtn').addEventListener('click', () => {
-    if (!editor.value.trim() || confirm('Clear the editor? This cannot be undone.')) {
+    if (!editor.value.trim() || confirm('Clear the editor? This will detach from the current file.')) {
+      captureCurrentBuffer();
+      currentFilePath = null;
+      fileNameInput.disabled = false;
+      fileField.classList.remove('disabled');
+      statusFile.textContent = '';
+      editor.readOnly = false;
+      editorShell.classList.remove('readonly');
+      userEditedFileName = false;
+      updateAutoBadge();
+
       editor.value = '';
       foldRegistry.clear();
       editor.focus();
@@ -3128,6 +3537,7 @@
   document.getElementById('fontDown').addEventListener('click', () => setFontSize(state.fontSize - 1));
 
   fileNameInput.addEventListener('input', () => {
+    if (currentFilePath) return;
     userEditedFileName = fileNameInput.value.trim().length > 0;
     updateAutoBadge();
     if (!userEditedFileName) syncFileNameFromCode();
@@ -3150,7 +3560,7 @@
   }
 
   /* ================================================================
-   *  Vertical splitter (editor ↔ side panel)
+   *  Vertical splitter
    * ================================================================ */
   (function () {
     let dragging = false;
@@ -3177,7 +3587,7 @@
   function saveState() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        code: getFullSource(),
+        code: currentFilePath ? '' : getFullSource(),
         fileName: fileNameInput.value,
         autoFileName: !userEditedFileName,
         args: argsInput.value,
@@ -3187,30 +3597,40 @@
         theme: state.theme,
         guides: state.guides,
         treeVisible: treeVisible,
-        treeBasis: treeBasis
+        treeBasis: treeBasis,
+        currentFilePath: currentFilePath || ''
       }));
     } catch (_) {}
   }
   function loadState() {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (_) { saved = null; }
-    if (saved && typeof saved.code === 'string') {
-      foldRegistry.clear();
+
+    let lastFile = '';
+    if (saved && typeof saved.currentFilePath === 'string') lastFile = saved.currentFilePath;
+
+    if (saved && typeof saved.code === 'string' && saved.code.trim()) {
       editor.value = saved.code;
-      fileNameInput.value = saved.fileName || 'Main';
-      userEditedFileName = saved.autoFileName === false;
-      argsInput.value = saved.args || '';
-      state.fontSize = saved.fontSize || 15;
-      state.theme = saved.theme || 'dark';
-      state.guides = saved.guides !== false;
-      if (typeof saved.stdinPrefill === 'string') stdinBox.value = saved.stdinPrefill;
-      cmdMode = !!saved.cmdMode;
-      treeBasis = saved.treeBasis || 240;
-      treeVisible = !!saved.treeVisible;
-    } else {
+      lastSavedText = saved.code;
+    } else if (!lastFile) {
       editor.value = DEFAULT_CODE;
-      userEditedFileName = false;
+      lastSavedText = null;
+    } else {
+      editor.value = '';
+      lastSavedText = null;
     }
+
+    fileNameInput.value = (saved && saved.fileName) || 'Main';
+    userEditedFileName = !!(saved && saved.autoFileName === false);
+    argsInput.value = (saved && saved.args) || '';
+    state.fontSize = (saved && saved.fontSize) || 15;
+    state.theme    = (saved && saved.theme) || 'dark';
+    state.guides   = !saved || saved.guides !== false;
+    if (saved && typeof saved.stdinPrefill === 'string') stdinBox.value = saved.stdinPrefill;
+    cmdMode = !!(saved && saved.cmdMode);
+    treeBasis   = (saved && saved.treeBasis) || 240;
+    treeVisible = !!(saved && saved.treeVisible);
+
     document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
     setTheme(state.theme);
     editorShell.classList.toggle('no-guides', !state.guides);
@@ -3231,19 +3651,23 @@
     if (treeVisible) treePanel.style.flexBasis = treeBasis + 'px';
 
     render();
-    markSaved();
+    refreshDirty();
+    return lastFile;
   }
 
   /* ================================================================
    *  Boot
    * ================================================================ */
-  loadState();
+  const lastFile = loadState();
   editor.focus();
   editor.setSelectionRange(0, 0);
 
-  restoreFolder().then(() => {
+  restoreFolder().then(async () => {
     if (dirHandle && dirNeedsPermission) {
       setStateMessage('Click Save to reconnect to "' + dirHandle.name + '"', 'dirty');
+    }
+    if (lastFile && dirHandle && !dirNeedsPermission) {
+      try { await openFile(lastFile); } catch (_) {}
     }
   });
 
