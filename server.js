@@ -10,6 +10,9 @@ const crypto     = require('crypto');
 const { execFile, spawn } = require('child_process');
 const { WebSocketServer } = require('ws');
 
+/* ------------------------------------------------------------------ *
+ *  Config
+ * ------------------------------------------------------------------ */
 const PORT               = process.env.PORT || 3000;
 const HOST               = process.env.HOST || '127.0.0.1';
 const COMPILE_TIMEOUT_MS = 15_000;
@@ -19,12 +22,16 @@ const MAX_CODE_BYTES     = 512 * 1024;
 const MAX_OUTPUT_BYTES   = 256 * 1024;
 const MAX_ARGS           = 64;
 const MAX_ARG_LEN        = 512;
+const MAX_USER_FILE_MB   = 32;              /* per-file cap for files/ round-trip */
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '8mb' }));
+app.use(express.json({ limit: '64mb' }));    /* bumped for base64 user files */
 app.use(express.static(path.join(__dirname, 'public')));
 
+/* ------------------------------------------------------------------ *
+ *  Helpers
+ * ------------------------------------------------------------------ */
 const IDENT_RE   = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const FQN_RE     = /^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*$/;
 const PACKAGE_RE = /\bpackage\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*;/;
@@ -92,6 +99,9 @@ function truncate(str) {
   return str.slice(0, MAX_OUTPUT_BYTES) + '\n…[output truncated]';
 }
 
+/* ------------------------------------------------------------------ *
+ *  Directory walkers
+ * ------------------------------------------------------------------ */
 async function collectClassFiles(dir, base) {
   const out = [];
   let entries;
@@ -112,8 +122,45 @@ async function collectClassFiles(dir, base) {
   return out;
 }
 
+/** Every file in dir, recursively, as { name, data(base64) }. */
+async function collectUserFiles(dir, base) {
+  const out = [];
+  let entries;
+  try { entries = await fs.readdir(dir, { withFileTypes: true }); }
+  catch { return out; }
+  for (const e of entries) {
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      out.push(...await collectUserFiles(full, base));
+    } else if (e.isFile()) {
+      const stat = await fs.stat(full);
+      if (stat.size > MAX_USER_FILE_MB * 1024 * 1024) continue;
+      const buf = await fs.readFile(full);
+      out.push({
+        name: path.relative(base, full).split(path.sep).join('/'),
+        data: buf.toString('base64')
+      });
+    }
+  }
+  return out;
+}
+
+/** Write { name, data(base64) }[] into dir, creating parents. Rejects traversal. */
+async function writeInitialUserFiles(dir, files) {
+  if (!Array.isArray(files)) return;
+  for (const f of files) {
+    if (!f || typeof f.name !== 'string' || typeof f.data !== 'string') continue;
+    const parts = f.name.split('/').filter(p => p && p !== '.' && p !== '..');
+    if (!parts.length) continue;
+    const dest = path.resolve(dir, parts.join(path.sep));
+    if (dest !== dir && !dest.startsWith(dir + path.sep)) continue;
+    await fs.mkdir(path.dirname(dest), { recursive: true });
+    await fs.writeFile(dest, Buffer.from(f.data, 'base64'));
+  }
+}
+
 /* ------------------------------------------------------------------ *
- *  Health
+ *  GET /api/health
  * ------------------------------------------------------------------ */
 app.get('/api/health', async (_req, res) => {
   const [j, v] = await Promise.all([
@@ -132,7 +179,7 @@ app.get('/api/health', async (_req, res) => {
 });
 
 /* ------------------------------------------------------------------ *
- *  /api/compile  — used by CMD "javac"
+ *  POST /api/compile
  * ------------------------------------------------------------------ */
 app.post('/api/compile', async (req, res) => {
   const started = Date.now();
@@ -176,11 +223,7 @@ app.post('/api/compile', async (req, res) => {
       });
     }
     const classFiles = await collectClassFiles(outDir, outDir);
-    res.json({
-      ok: true, className, packageName: pkg || null,
-      classFiles,
-      durationMs: Date.now() - started
-    });
+    res.json({ ok: true, className, packageName: pkg || null, classFiles, durationMs: Date.now() - started });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   } finally {
@@ -200,9 +243,13 @@ function sendWs(ws, obj) {
   }
 }
 
-/* Stream a `java` subprocess: stdout/stderr are forwarded live, and
- * whatever the client sends as `input` messages gets piped to stdin. */
-function streamJavaProcess(ws, state, { javaArgs, cwd, presetStdin, started }) {
+/**
+ * Spawn `java` and stream everything back over the socket.
+ * cwd/dataDir — the sandbox where user files live. On process close,
+ * the directory is walked and every file is sent back as userFiles
+ * before the exit message.
+ */
+function streamJavaProcess(ws, state, { javaArgs, cwd, dataDir, presetStdin, started }) {
   return new Promise((resolve) => {
     const child = spawn('java', javaArgs, { cwd, windowsHide: true });
     state.proc = child;
@@ -227,9 +274,19 @@ function streamJavaProcess(ws, state, { javaArgs, cwd, presetStdin, started }) {
       resolve();
     });
 
-    child.on('close', (exitCode, signal) => {
+    child.on('close', async (exitCode, signal) => {
       clearTimeout(timer);
       state.proc = null;
+
+      /* Return whatever lives in the sandbox now — either created or
+       * modified by the program — so the browser can persist it. */
+      if (dataDir) {
+        try {
+          const files = await collectUserFiles(dataDir, dataDir);
+          if (files.length > 0) sendWs(ws, { type: 'userFiles', files });
+        } catch (_) {}
+      }
+
       const killed = signal === 'SIGKILL';
       sendWs(ws, {
         type: 'exit',
@@ -249,13 +306,14 @@ function streamJavaProcess(ws, state, { javaArgs, cwd, presetStdin, started }) {
 }
 
 /* ------------------------------------------------------------------ *
- *  Compile-then-run  (used by Run and Save & Run)
+ *  Compile-and-run  (Run, Save & Run)
  * ------------------------------------------------------------------ */
 async function handleCompileAndRun(ws, msg, state) {
   const started   = Date.now();
   const code      = msg.code;
   const preset    = typeof msg.stdin === 'string' ? msg.stdin : '';
   const args      = sanitizeArgs(msg.args);
+  const userFiles = Array.isArray(msg.userFiles) ? msg.userFiles : [];
   const wantClass = !!msg.wantClassFiles;
 
   if (typeof code !== 'string' || !code.trim()) {
@@ -291,6 +349,7 @@ async function handleCompileAndRun(ws, msg, state) {
 
   const srcRoot = path.join(workDir, 'src');
   const outDir  = path.join(workDir, 'out');
+  const dataDir = path.join(workDir, 'data');
   const srcDir  = pkg ? path.join(srcRoot, ...pkg.split('.')) : srcRoot;
   const srcFile = path.join(srcDir, className + '.java');
   const fqn     = pkg ? `${pkg}.${className}` : className;
@@ -298,7 +357,14 @@ async function handleCompileAndRun(ws, msg, state) {
   try {
     await fs.mkdir(srcDir, { recursive: true });
     await fs.mkdir(outDir,  { recursive: true });
+    await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(srcFile, code, 'utf8');
+
+    /* Populate the sandbox with the user's files before running. */
+    if (userFiles.length) {
+      try { await writeInitialUserFiles(dataDir, userFiles); }
+      catch (_) {}
+    }
 
     if (state.cancelled) return;
 
@@ -326,14 +392,9 @@ async function handleCompileAndRun(ws, msg, state) {
 
     if (wantClass) {
       const classFiles = await collectClassFiles(outDir, outDir);
-      sendWs(ws, {
-        type: 'classFiles',
-        className, packageName: pkg || null,
-        classFiles
-      });
+      sendWs(ws, { type: 'classFiles', className, packageName: pkg || null, classFiles });
 
-      /* Wait for the client to finish writing files to disk before we run,
-       * so the "✓ Saved" messages appear above the program's output. */
+      /* Wait for the client to finish writing before running. */
       await new Promise((resolve) => {
         let done = false;
         const finish = () => {
@@ -353,11 +414,9 @@ async function handleCompileAndRun(ws, msg, state) {
     sendWs(ws, { type: 'stage', stage: 'run' });
 
     await streamJavaProcess(ws, state, {
-      javaArgs: [
-        '-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8',
-        '-cp', outDir, fqn, ...args
-      ],
-      cwd: workDir,
+      javaArgs: ['-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-cp', outDir, fqn, ...args],
+      cwd: dataDir,
+      dataDir,
       presetStdin: preset,
       started
     });
@@ -373,12 +432,13 @@ async function handleCompileAndRun(ws, msg, state) {
 }
 
 /* ------------------------------------------------------------------ *
- *  Direct-class run  (used by CMD "java")
+ *  Direct-class run  (CMD "java")
  * ------------------------------------------------------------------ */
 async function handleDirectClassRun(ws, msg, state) {
   const started   = Date.now();
   const className = msg.className;
   const classFiles = msg.classFiles;
+  const userFiles  = Array.isArray(msg.userFiles) ? msg.userFiles : [];
   const args      = sanitizeArgs(msg.args);
   const preset    = typeof msg.stdin === 'string' ? msg.stdin : '';
 
@@ -397,10 +457,14 @@ async function handleDirectClassRun(ws, msg, state) {
 
   const workDir = path.join(os.tmpdir(), 'java-web-ide', crypto.randomUUID());
   const cpDir   = path.join(workDir, 'classes');
+  const dataDir = path.join(workDir, 'data');
   state.workDir = workDir;
 
   try {
-    await fs.mkdir(cpDir, { recursive: true });
+    await fs.mkdir(cpDir,   { recursive: true });
+    await fs.mkdir(dataDir, { recursive: true });
+
+    /* Materialise class files into the classpath. */
     for (const cf of classFiles) {
       if (!cf || typeof cf.name !== 'string' || typeof cf.data !== 'string') continue;
       const parts = cf.name.split('/').filter(p => p && p !== '.' && p !== '..');
@@ -411,16 +475,19 @@ async function handleDirectClassRun(ws, msg, state) {
       await fs.writeFile(dest, Buffer.from(cf.data, 'base64'));
     }
 
-    if (state.cancelled) return;
+    /* Populate the sandbox with the user's files. */
+    if (userFiles.length) {
+      try { await writeInitialUserFiles(dataDir, userFiles); }
+      catch (_) {}
+    }
 
+    if (state.cancelled) return;
     sendWs(ws, { type: 'stage', stage: 'run' });
 
     await streamJavaProcess(ws, state, {
-      javaArgs: [
-        '-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8',
-        '-cp', cpDir, className, ...args
-      ],
-      cwd: workDir,
+      javaArgs: ['-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-cp', cpDir, className, ...args],
+      cwd: dataDir,
+      dataDir,
       presetStdin: preset,
       started
     });
@@ -442,6 +509,9 @@ function handleStart(ws, msg, state) {
   return handleCompileAndRun(ws, msg, state);
 }
 
+/* ------------------------------------------------------------------ *
+ *  WebSocket connection handling
+ * ------------------------------------------------------------------ */
 wss.on('connection', (ws) => {
   const state = {
     proc: null,
@@ -476,7 +546,6 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     state.cancelled = true;
-    /* release any pending ack wait so nothing hangs */
     const r = state.ackResolvers.get('classFiles');
     if (r) r();
     if (state.proc) { try { state.proc.kill('SIGKILL'); } catch (_) {} }
@@ -503,6 +572,9 @@ app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ ok: false, error: err.message || 'Internal server error' });
 });
 
+/* ------------------------------------------------------------------ *
+ *  Boot
+ * ------------------------------------------------------------------ */
 server.listen(PORT, HOST, () => {
   console.log('');
   console.log('  Java Web IDE');
