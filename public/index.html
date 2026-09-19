@@ -10,8 +10,11 @@
 
   :root {
     --font-size: 15px;
-    --line-height: 1.42;
-    --line-box: calc(var(--font-size) * var(--line-height));
+    /* INTEGER pixel line-height. A unitless 1.42 produced 21.3px, which
+       made the <pre> overlay drift out of sync with the <textarea> caret
+       on long files. JS keeps this a whole number at every font size. */
+    --line-height: 21px;
+    --line-box: var(--line-height);
     --pad-y: 14px;
     --pad-x: 16px;
     --mono: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -326,15 +329,23 @@
 
   .editor-area { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; }
 
+  /* No soft wrap: text scrolls horizontally. */
   .highlight, .editor {
     position: absolute; inset: 0; margin: 0;
-    padding: var(--pad-y) var(--pad-x); border: 0;
+    padding: var(--pad-y) var(--pad-x);
+    border: 0;
     font-family: var(--mono); font-size: var(--font-size); line-height: var(--line-height);
     font-variant-ligatures: none; tab-size: 2; -moz-tab-size: 2;
-    white-space: pre; overflow-wrap: normal; word-break: normal;
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
   }
   .highlight { overflow: hidden; pointer-events: none; background: transparent; color: var(--fg); z-index: 0; }
-  .highlight code { display: block; font: inherit; color: inherit; }
+  .highlight code {
+    display: block; font: inherit; color: inherit;
+    /* moved by translate() so its position can never be clamped like scrollTop */
+    will-change: transform;
+  }
 
   .overlay-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
   .overlay-track { position: absolute; inset: 0; will-change: transform; }
@@ -450,15 +461,9 @@
   }
   .term-body .stack-link:hover { background: var(--accent); color: #fff; }
 
-  .term-input-row {
-    display: none; align-items: baseline; gap: 4px;
-    margin-top: 2px; min-height: 1.55em;
-  }
+  .term-input-row { display: none; align-items: baseline; gap: 4px; margin-top: 2px; min-height: 1.55em; }
   .term-input-row.show { display: flex; }
-  .term-input-prompt {
-    color: var(--accent-hover); font-weight: 700;
-    flex: 0 0 auto; font-family: var(--mono);
-  }
+  .term-input-prompt { color: var(--accent-hover); font-weight: 700; flex: 0 0 auto; font-family: var(--mono); }
   .term-input {
     flex: 1 1 auto; min-width: 0;
     background: transparent; border: 0; outline: none; padding: 0;
@@ -599,7 +604,66 @@
     font-size: 13px; line-height: 1.55; color: var(--fg);
   }
   .tips-note strong { color: var(--accent); }
-  .tips-note .emoji { font-size: 15px; margin-right: 4px; }
+
+  /* Floating action buttons */
+  .fab {
+    position: fixed;
+    right: 22px;
+    bottom: 60px;
+    height: 56px;
+    min-width: 56px;
+    padding: 0 14px;
+    display: inline-flex; align-items: center;
+    border: 0; border-radius: 28px;
+    background: linear-gradient(135deg, #f89820 0%, #5382a1 100%);
+    color: #fff;
+    font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; z-index: 150;
+    pointer-events: auto;
+    box-shadow: 0 4px 14px rgba(0,0,0,.32), 0 2px 8px rgba(248,152,32,.45);
+    transition: transform .15s ease, box-shadow .15s ease, padding .2s ease;
+  }
+  .fab .fab-plus {
+    display: inline-block; width: 28px; text-align: center;
+    font-size: 26px; line-height: 1; font-weight: 300;
+    transition: transform .25s ease;
+  }
+  .fab .fab-label {
+    max-width: 0; overflow: hidden; white-space: nowrap;
+    opacity: 0;
+    transition: max-width .25s ease, opacity .15s ease, margin-left .25s ease;
+  }
+  .fab:hover, .fab:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.38), 0 3px 12px rgba(248,152,32,.55);
+    padding-right: 22px;
+  }
+  .fab:hover .fab-label, .fab:focus-visible .fab-label {
+    max-width: 140px; opacity: 1; margin-left: 6px;
+  }
+  .fab:hover .fab-plus, .fab:focus-visible .fab-plus { transform: rotate(90deg); }
+  .fab:active { transform: translateY(1px) scale(.98); }
+  .fab:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 3px; }
+
+  .fab-cmd {
+    bottom: 130px;
+    background: linear-gradient(135deg, #0e639c 0%, #1177bb 100%);
+    box-shadow: 0 4px 14px rgba(0,0,0,.32), 0 2px 8px rgba(14,99,156,.5);
+  }
+  .fab-cmd .fab-plus {
+    font-size: 20px; font-weight: 400;
+  }
+  .fab-cmd:hover .fab-plus, .fab-cmd:focus-visible .fab-plus { transform: none; }
+  .fab-cmd:hover, .fab-cmd:focus-visible {
+    box-shadow: 0 6px 20px rgba(0,0,0,.38), 0 3px 12px rgba(14,99,156,.65);
+  }
+  .fab-cmd.on {
+    background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
+    box-shadow: 0 4px 14px rgba(0,0,0,.32), 0 2px 8px rgba(46,160,67,.5);
+  }
+  .fab-cmd.on:hover, .fab-cmd.on:focus-visible {
+    box-shadow: 0 6px 20px rgba(0,0,0,.38), 0 3px 12px rgba(46,160,67,.65);
+  }
 
   @media (max-width: 900px) {
     .brand h1 { display: none; }
@@ -620,6 +684,10 @@
     .splitter-v, .splitter-tree { flex: 0 0 6px; cursor: row-resize; }
     .splitter-v::after, .splitter-tree::after { width: 40px; height: 3px; }
     .side-panel { flex: 0 0 40%; max-width: none; }
+    .fab { right: 14px; bottom: 14px; height: 52px; min-width: 52px; padding: 0 16px; }
+    .fab .fab-plus { font-size: 24px; }
+    .fab-cmd { bottom: 76px; }
+    .fab-cmd .fab-plus { font-size: 18px; }
   }
 </style>
 </head>
@@ -652,16 +720,16 @@
         <span class="folder-name" id="folderName">No folder</span>
       </button>
 
-      <button class="btn" id="openBtn" type="button" title="Open a .java file">Open</button>
+      <button class="btn" id="openBtn" type="button" title="Open a .java file (Ctrl+O)">Open</button>
       <button class="btn primary" id="saveBtn" type="button" title="Save (Ctrl+S)">Save</button>
-      <button class="btn" id="saveAsBtn" type="button" title="Save to a different location">Save As…</button>
-      <button class="btn" id="copyBtn" type="button" title="Copy all code">Copy</button>
-      <button class="btn" id="clearBtn" type="button" title="Clear the editor">Clear</button>
+      <button class="btn" id="saveAsBtn" type="button" title="Save to a different location (Ctrl+Shift+S)">Save As…</button>
+      <button class="btn" id="copyBtn" type="button" title="Copy all code (Ctrl+Alt+C)">Copy</button>
+      <button class="btn" id="clearBtn" type="button" title="Clear the editor (Ctrl+Alt+L)">Clear</button>
       <button class="btn icon on" id="guidesBtn" type="button" title="Toggle indent guides">⫴</button>
-      <button class="btn icon" id="themeBtn" type="button" title="Toggle light / dark theme">☀️</button>
-      <button class="btn icon" id="fontDown" type="button" title="Smaller font">A−</button>
-      <button class="btn icon" id="fontUp" type="button" title="Larger font">A+</button>
-      <button class="btn icon help" id="tipsBtn" type="button" title="Shortcuts & tips (F1)">?</button>
+      <button class="btn icon" id="themeBtn" type="button" title="Toggle light / dark theme (Ctrl+Alt+T)">☀️</button>
+      <button class="btn icon" id="fontDown" type="button" title="Smaller font (Ctrl+-)">A−</button>
+      <button class="btn icon" id="fontUp" type="button" title="Larger font (Ctrl+=)">A+</button>
+      <button class="btn icon help" id="tipsBtn" type="button" title="Shortcuts &amp; tips (F1)">?</button>
 
       <button class="btn run" id="runBtn" type="button" title="Compile &amp; run interactively (Ctrl+Enter)">
         <span id="runLabel">▶ Run</span>
@@ -671,7 +739,6 @@
       </button>
 
       <button class="btn icon" id="treeBtn" type="button" title="Toggle file tree (Ctrl+B)">☰</button>
-      <button class="btn icon" id="cmdBtn" type="button" title="Toggle CMD mode">⌨ CMD</button>
 
       <input type="file" id="fileInput" accept=".java,.txt,text/plain" hidden>
     </div>
@@ -753,6 +820,18 @@
 
   <div class="ac-popup" id="acPopup" hidden></div>
 
+  <button class="fab fab-cmd" id="cmdBtn" type="button"
+          aria-label="Toggle CMD mode" title="Toggle CMD mode (Ctrl+Alt+M)">
+    <span class="fab-plus" aria-hidden="true">⌨</span>
+    <span class="fab-label">CMD</span>
+  </button>
+
+  <button class="fab" id="newProgramBtn" type="button"
+          aria-label="New Program" title="New Program (Ctrl+Alt+N)">
+    <span class="fab-plus" aria-hidden="true">+</span>
+    <span class="fab-label">New Program</span>
+  </button>
+
   <div class="modal-backdrop" id="tipsBackdrop" role="dialog" aria-modal="true" aria-labelledby="tipsTitle">
     <div class="modal">
       <header class="modal-head">
@@ -762,11 +841,35 @@
       <div class="modal-body">
 
         <section class="tips-section">
+          <h3>Keyboard shortcuts</h3>
+          <ul class="tips-list">
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span><span>Run.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span><span>Save &amp; Run.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></span><span>New Program (floating + button).</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>M</kbd></span><span>Toggle CMD mode (floating ⌨ button).</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>O</kbd></span><span>Open file.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>S</kbd></span><span>Save &nbsp;·&nbsp; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> Save As.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd></span><span>Copy all code.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd></span><span>Clear editor.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd></span><span>Toggle light / dark theme.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>B</kbd></span><span>Toggle file tree.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> / <kbd>Ctrl</kbd>+<kbd>0</kbd></span><span>Font size bigger / smaller / reset.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Space</kbd></span><span>Autocomplete popup.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>D</kbd></span><span>Duplicate current line.</span></li>
+            <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>/</kbd></span><span>Toggle line comment.</span></li>
+            <li><span class="keys"><kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd></span><span>Move line up / down.</span></li>
+            <li><span class="keys"><kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd></span><span>Indent / outdent (or expand snippet).</span></li>
+            <li><span class="keys"><kbd>F1</kbd></span><span>This panel.</span></li>
+          </ul>
+        </section>
+
+        <section class="tips-section">
           <h3>Editor &amp; code intelligence</h3>
           <ul class="tips-list">
             <li><span class="keys"><kbd>Ctrl</kbd>+<kbd>Space</kbd></span><span>Completion popup — Java keywords, JDK types, snippet names, and identifiers from the current buffer.</span></li>
             <li><span class="keys"><kbd>sout</kbd> + <kbd>Tab</kbd></span><span>Expands to <code>System.out.println();</code>. Also <code>soutv</code>, <code>serr</code>, <code>psvm</code>, <code>main</code>, <code>fori</code>, <code>foreach</code>, <code>while</code>, <code>trycatch</code>.</span></li>
             <li><span class="keys"><kbd>▶</kbd> / <kbd>▼</kbd></span><span>Fold arrows in the gutter collapse a <code>{ … }</code> block into a one-line summary.</span></li>
+            <li><span class="keys"><kbd>scroll</kbd></span><span>Long lines scroll horizontally. Drag the bottom scrollbar, or use <kbd>Shift</kbd>+scroll wheel.</span></li>
           </ul>
         </section>
 
@@ -796,7 +899,7 @@
             <li><span class="keys"><kbd>push</kbd></span><span>Saves the editor into <code>&lt;folder&gt;/java/</code>.</span></li>
             <li><span class="keys"><kbd>javac</kbd></span><span><code>javac Main.java</code> → <code>&lt;folder&gt;/class/Main.class</code>.</span></li>
             <li><span class="keys"><kbd>java</kbd></span><span><code>java Main arg1 arg2</code> — runs interactively. Uses <code>files/</code> as the working directory.</span></li>
-            <li><span class="keys"><kbd>ls</kbd> <kbd>pwd</kbd> <kbd>cat</kbd> <kbd>echo</kbd> <kbd>cls</kbd> <kbd>help</kbd></span><span>Other commands.</span></li>
+            <li><span class="keys"><kbd>ls</kbd> <kbd>pwd</kbd> <kbd>cat</kbd> <kbd>echo</kbd> <kbd>cls</kbd> <kbd>help</kbd></span><span>Other commands. Toggle via the floating ⌨ button.</span></li>
           </ul>
         </section>
 
@@ -827,6 +930,7 @@
   const bracketA      = document.getElementById('bracketA');
   const bracketB      = document.getElementById('bracketB');
   const editorShell   = document.getElementById('editorShell');
+  const editorArea    = editor.parentElement;
   const fileNameInput = document.getElementById('fileName');
   const fileField     = document.getElementById('fileField');
   const argsInput     = document.getElementById('argsInput');
@@ -848,6 +952,8 @@
   const tipsBtn       = document.getElementById('tipsBtn');
   const tipsBackdrop  = document.getElementById('tipsBackdrop');
   const tipsClose     = document.getElementById('tipsClose');
+  const newProgramBtn = document.getElementById('newProgramBtn');
+  const cmdBtn        = document.getElementById('cmdBtn');
 
   const runBtn        = document.getElementById('runBtn');
   const runLabel      = document.getElementById('runLabel');
@@ -869,7 +975,6 @@
   const splitterV     = document.getElementById('splitterV');
   const jdkBadge      = document.getElementById('jdkBadge');
   const jdkText       = document.getElementById('jdkText');
-  const cmdBtn        = document.getElementById('cmdBtn');
 
   const treePanel     = document.getElementById('treePanel');
   const treeBody      = document.getElementById('treeBody');
@@ -884,6 +989,7 @@
    * ================================================================ */
   const INDENT       = '  ';
   const INDENT_UNIT  = 2;
+  const LINE_RATIO   = 1.42;     /* line-height / font-size ratio; always rounded to whole px */
   const STORAGE_KEY  = 'java-web-editor.v1';
   const DB_NAME      = 'java-web-editor';
   const DB_STORE     = 'handles';
@@ -904,6 +1010,13 @@
     '    System.out.print("What is your name? ");\n' +
     '    String name = sc.hasNextLine() ? sc.nextLine() : "World";\n' +
     '    System.out.println("Hello, " + name + "!");\n' +
+    '  }\n' +
+    '}';
+
+  const NEW_PROGRAM_CODE =
+    'public class Main {\n' +
+    '  public static void main(String[] args) {\n' +
+    '    System.out.println("Hello, World!");\n' +
     '  }\n' +
     '}';
 
@@ -963,11 +1076,7 @@
   let treeVisible = false;
   let treeBasis = 240;
 
-  /* Paths of folders currently expanded in the tree. Survives rebuilds so
-     the tree doesn't collapse when the server pushes new files. */
   const expandedFolders = new Set();
-
-  /* multi-file state */
   let currentFilePath = null;
   const openFiles = new Map();
 
@@ -978,6 +1087,21 @@
   let acItems = [];
   let acIndex = 0;
   let acPrefixStart = 0;
+
+  /* ================================================================
+   *  Font size / line height
+   *  Line-height MUST be an integer number of pixels so the <pre>
+   *  overlay and the <textarea> use exactly the same row grid.
+   * ================================================================ */
+  function applyFontSize() {
+    const root = document.documentElement.style;
+    const px   = Math.round(state.fontSize * LINE_RATIO);
+    root.setProperty('--font-size', state.fontSize + 'px');
+    root.setProperty('--line-height', px + 'px');
+    root.setProperty('--line-box', px + 'px');
+    /* force char-width re-measurement on the next render */
+    charWidthCache.width = 0;
+  }
 
   /* ================================================================
    *  Args tokenizer
@@ -1267,7 +1391,6 @@
     await w.close();
   }
 
-  /* files/ — persistent user data */
   async function ensureWorkFolders() {
     if (!dirHandle) return;
     try {
@@ -1352,7 +1475,6 @@
     const isClass       = ext === 'class';
     const inClassFolder = relPath === 'class' || relPath.startsWith('class/');
 
-    /* Anything under class/ or with a .class extension → read-only hex dump */
     if (isClass || inClassFolder) {
       const dump = hexDump(bytes, relPath, file.size);
       return {
@@ -1362,7 +1484,6 @@
       };
     }
 
-    /* Real binary content (contains NUL) → read-only hex dump */
     if (isBinary(bytes)) {
       const dump = hexDump(bytes, relPath, file.size);
       return {
@@ -1372,7 +1493,6 @@
       };
     }
 
-    /* Everything else is editable text */
     const text = new TextDecoder('utf-8').decode(bytes).replace(/\r\n?/g, '\n');
     return {
       content: text, savedContent: text,
@@ -1401,7 +1521,6 @@
 
     captureCurrentBuffer();
 
-    /* Keep unsaved edits in memory — don't clobber with disk version. */
     const cached = openFiles.get(relPath);
     if (cached && !cached.readOnly && cached.content !== cached.savedContent) {
       applyOpenFile(relPath, cached);
@@ -1409,7 +1528,6 @@
       return;
     }
 
-    /* Otherwise, always read fresh from disk. */
     setStateMessage('Opening ' + relPath + '…', 'saved');
     try {
       const entry = await readFileForEditor(relPath);
@@ -1424,7 +1542,6 @@
   function applyOpenFile(relPath, entry) {
     currentFilePath = relPath;
 
-    /* Auto-expand every ancestor folder so the file is visible in the tree. */
     const parts = relPath.split('/');
     for (let i = 1; i < parts.length; i++) {
       expandedFolders.add(parts.slice(0, i).join('/'));
@@ -1481,8 +1598,6 @@
    *  File tree
    * ================================================================ */
   async function buildTree() {
-    /* Snapshot scroll position and current highlight so the rebuild feels
-       seamless. */
     const prevScrollTop = treeBody.scrollTop;
 
     treeBody.replaceChildren();
@@ -1508,7 +1623,6 @@
       treeBody.appendChild(d);
     }
 
-    /* Restore scroll position (clamped to the new content height). */
     requestAnimationFrame(() => {
       treeBody.scrollTop = Math.min(
         prevScrollTop,
@@ -1545,7 +1659,6 @@
 
     const inClassFolder = fullPath === 'class' || fullPath.startsWith('class/');
     const isClass = ext === 'class';
-    const knownText = TEXT_EXT.has(ext);
     const preReadOnly = !isDir && (isClass || inClassFolder);
 
     const wrap = document.createElement('div');
@@ -1598,7 +1711,6 @@
         }
       };
 
-      /* Central place to open/close that also updates expandedFolders. */
       const setOpen = async (open) => {
         if (open) {
           await loadChildren();
@@ -1621,7 +1733,6 @@
       toggle.addEventListener('click', toggleOpen);
       row.addEventListener('click', () => toggleOpen());
 
-      /* Re-open the folder if it was open before the last rebuild. */
       if (expandedFolders.has(fullPath)) {
         await setOpen(true);
       }
@@ -1953,10 +2064,9 @@
     editor.setSelectionRange(offset, offset);
 
     const cs = getComputedStyle(editor);
-    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const lineHeight = parseFloat(cs.lineHeight) || 21;
     const padY = parseFloat(cs.paddingTop) || 0;
-    const target = padY + viewIdx * lineHeight;
-    editor.scrollTop = Math.max(0, target - editor.clientHeight / 2);
+    editor.scrollTop = Math.max(0, padY + viewIdx * lineHeight - editor.clientHeight / 2);
     syncScroll();
     updateStatus();
     updateOverlays();
@@ -1999,7 +2109,7 @@
 
   function positionAC() {
     const cs = getComputedStyle(editor);
-    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const lineHeight = parseFloat(cs.lineHeight) || 21;
     const padY = parseFloat(cs.paddingTop) || 0;
     const padX = parseFloat(cs.paddingLeft) || 0;
     const charWidth = getCharWidth();
@@ -2180,7 +2290,7 @@
     const s = editor.selectionStart;
 
     const cs = getComputedStyle(editor);
-    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const lineHeight = parseFloat(cs.lineHeight) || 21;
     const padY = parseFloat(cs.paddingTop) || 0;
     const padX = parseFloat(cs.paddingLeft) || 0;
     const charWidth = getCharWidth();
@@ -2398,7 +2508,6 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function save(forcePicker) {
-    /* specific file open → save to that path */
     if (currentFilePath && !forcePicker) {
       const entry = openFiles.get(currentFilePath);
       if (entry && entry.readOnly) {
@@ -2414,7 +2523,6 @@
 
           const fh = await dir.getFileHandle(fname, { create: true });
 
-          /* Sanity check permission before opening a writable stream */
           if (typeof fh.queryPermission === 'function') {
             const perm = await fh.queryPermission({ mode: 'readwrite' });
             if (perm !== 'granted') {
@@ -2430,9 +2538,8 @@
 
           const w = await fh.createWritable();
           await w.write(editor.value);
-          await w.close();      /* resolves when the data has been flushed */
+          await w.close();
 
-          /* Read back to confirm the write actually landed */
           try {
             const check  = await fh.getFile();
             const text   = await check.text();
@@ -2454,7 +2561,6 @@
       }
     }
 
-    /* scratch mode */
     const name = currentFileName();
     const code = getFullSource();
 
@@ -2631,7 +2737,7 @@
     const unit  = detectIndentUnit(lines);
     const counts = computeGuides(lines, unit);
     const cs = getComputedStyle(editor);
-    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const lineHeight = parseFloat(cs.lineHeight) || 21;
     const padY = parseFloat(cs.paddingTop) || 0;
     const padX = parseFloat(cs.paddingLeft) || 0;
     const charWidth = getCharWidth();
@@ -2685,23 +2791,34 @@
     lineNumbers.replaceChildren(buf);
 
     renderFoldColumn();
-
     renderGuides();
     syncScroll();
     updateOverlays();
     updateStatus();
     syncFileNameFromCode();
   }
+
+  /* Transform-based scroll sync.
+   * The <pre> overlay is moved with translate() rather than scrollTop:
+   * scrollTop on an overflow:hidden element can be clamped (its max
+   * value can differ from the textarea's by a few pixels), which used
+   * to make the overlay lag behind at the bottom of long files. A
+   * transform can never be clamped, so the layers stay locked. */
   function syncScroll() {
-    highlight.scrollTop  = editor.scrollTop;
-    highlight.scrollLeft = editor.scrollLeft;
-    const ty = 'translateY(' + (-editor.scrollTop) + 'px)';
+    const x = -editor.scrollLeft;
+    const y = -editor.scrollTop;
+
+    highlightCode.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+    const ty = 'translateY(' + y + 'px)';
     lineNumbers.style.transform = ty;
-    foldCol.style.transform = ty;
-    const t = 'translate(' + (-editor.scrollLeft) + 'px, ' + (-editor.scrollTop) + 'px)';
+    foldCol.style.transform     = ty;
+
+    const t = 'translate(' + x + 'px, ' + y + 'px)';
     guidesTrack.style.transform  = t;
     overlayTrack.style.transform = t;
   }
+
   function updateStatus() {
     const v = editor.value;
     const s = editor.selectionStart;
@@ -2752,6 +2869,49 @@
   }
 
   /* ================================================================
+   *  Caret auto-scroll
+   *  Keeps the caret inside the visible viewport whenever the code
+   *  is edited programmatically (native typing already does this).
+   * ================================================================ */
+  function ensureCaretVisible() {
+    const cs = getComputedStyle(editor);
+    const lineHeight = parseFloat(cs.lineHeight) || 21;
+    const padTop = parseFloat(cs.paddingTop) || 0;
+    const padLeft = parseFloat(cs.paddingLeft) || 0;
+    const charWidth = getCharWidth();
+
+    const v = editor.value;
+    const pos = editor.selectionStart;
+    const before = v.slice(0, pos);
+    const line = before.split('\n').length - 1;
+    const col  = pos - (before.lastIndexOf('\n') + 1);
+
+    const caretTop    = padTop + line * lineHeight;
+    const caretBottom = caretTop + lineHeight;
+    const caretLeft   = padLeft + col * charWidth;
+    const caretRight  = caretLeft + charWidth;
+
+    const viewTop    = editor.scrollTop;
+    const viewBottom = viewTop + editor.clientHeight;
+    const viewLeft   = editor.scrollLeft;
+    const viewRight  = viewLeft + editor.clientWidth;
+
+    /* Vertical: keep one line of margin top/bottom */
+    if (caretTop < viewTop + lineHeight) {
+      editor.scrollTop = Math.max(0, caretTop - lineHeight);
+    } else if (caretBottom > viewBottom - lineHeight) {
+      editor.scrollTop = caretBottom - editor.clientHeight + lineHeight;
+    }
+
+    /* Horizontal: keep a small column margin left/right */
+    if (caretLeft < viewLeft) {
+      editor.scrollLeft = Math.max(0, caretLeft - charWidth * 4);
+    } else if (caretRight > viewRight) {
+      editor.scrollLeft = caretRight - editor.clientWidth + charWidth * 4;
+    }
+  }
+
+  /* ================================================================
    *  Edit helper
    * ================================================================ */
   function applyEdit(start, end, text, selStart, selEnd) {
@@ -2772,6 +2932,9 @@
     if (selStart === undefined) selStart = start + text.length;
     if (selEnd === undefined)   selEnd = selStart;
     editor.setSelectionRange(selStart, selEnd);
+
+    ensureCaretVisible();
+
     _braceSrc = null;
     maskCacheSrc = null;
     queueRender();
@@ -2918,7 +3081,11 @@
     if (mod && e.key === ' ') { e.preventDefault(); openAC(); return; }
     if (mod && e.key.toLowerCase() === 'b') { e.preventDefault(); toggleTree(); return; }
 
-    if (mod && e.key === 'Enter') { e.preventDefault(); runBtn.click(); return; }
+    if (mod && e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) saveRunBtn.click(); else runBtn.click();
+      return;
+    }
     if (mod && !e.altKey) {
       const k = e.key.toLowerCase();
       if (k === 's') { e.preventDefault(); save(e.shiftKey); return; }
@@ -2952,13 +3119,36 @@
     }
   });
 
+  /* Document-level shortcuts */
   document.addEventListener('keydown', e => {
+    if (e.defaultPrevented) return;
     const mod = e.ctrlKey || e.metaKey;
+    const k   = (e.key || '').toLowerCase();
+
     if (mod && e.key === 'Enter' && document.activeElement !== editor && document.activeElement !== termInput) {
       e.preventDefault();
-      if (e.shiftKey) saveRunBtn.click();
-      else            runBtn.click();
+      if (e.shiftKey) saveRunBtn.click(); else runBtn.click();
+      return;
     }
+    if (mod && e.altKey && k === 'n') { e.preventDefault(); newProgram(); return; }
+    if (mod && e.altKey && k === 'm') { e.preventDefault(); if (!running) setCmdMode(!cmdMode); return; }
+    if (mod && !e.altKey && !e.shiftKey && k === 'o') { e.preventDefault(); openFileDialog(); return; }
+    if (mod && !e.altKey && e.shiftKey && k === 's' && document.activeElement !== editor) {
+      e.preventDefault(); save(true); return;
+    }
+    if (mod && e.altKey && k === 'c') { e.preventDefault(); copyAll(); return; }
+    if (mod && e.altKey && k === 'l') { e.preventDefault(); clearEditorConfirm(); return; }
+    if (mod && e.altKey && k === 't') {
+      e.preventDefault();
+      setTheme(state.theme === 'dark' ? 'light' : 'dark'); return;
+    }
+    if (mod && !e.altKey && (e.key === '=' || e.key === '+')) { e.preventDefault(); setFontSize(state.fontSize + 1); return; }
+    if (mod && !e.altKey && e.key === '-')                    { e.preventDefault(); setFontSize(state.fontSize - 1); return; }
+    if (mod && !e.altKey && e.key === '0')                    { e.preventDefault(); setFontSize(15); return; }
+    if (mod && !e.altKey && k === 'b' && document.activeElement !== editor) {
+      e.preventDefault(); toggleTree(); return;
+    }
+
     if (e.key === 'F1') { e.preventDefault(); tipsBackdrop.classList.contains('open') ? closeTips() : openTips(); return; }
     if (e.key === 'Escape') {
       if (acVisible) { e.preventDefault(); closeAC(); return; }
@@ -2972,6 +3162,8 @@
   editor.addEventListener('input', () => {
     _braceSrc = null;
     maskCacheSrc = null;
+    /* Keep the caret in view as the user types (works for Enter too). */
+    ensureCaretVisible();
     queueRender();
     saveSoon();
     refreshDirty();
@@ -3454,11 +3646,106 @@
   /* ================================================================
    *  Toolbar actions
    * ================================================================ */
+  function openFileDialog() { fileInput.click(); }
+
+  async function copyAll() {
+    try {
+      await navigator.clipboard.writeText(getFullSource());
+      setStateMessage('Copied to clipboard', 'saved');
+    } catch (_) {
+      editor.select();
+      try { document.execCommand('copy'); setStateMessage('Copied to clipboard', 'saved'); }
+      catch (_) { setStateMessage('Copy failed', 'error'); }
+      editor.setSelectionRange(0, 0);
+    }
+  }
+
+  function clearEditorConfirm() {
+    if (!editor.value.trim() || confirm('Clear the editor? This will detach from the current file.')) {
+      captureCurrentBuffer();
+      currentFilePath = null;
+      fileNameInput.disabled = false;
+      fileField.classList.remove('disabled');
+      fileField.title = '';
+      statusFile.textContent = '';
+      editor.readOnly = false;
+      editorShell.classList.remove('readonly');
+      userEditedFileName = false;
+      updateAutoBadge();
+
+      editor.value = '';
+      foldRegistry.clear();
+      editor.focus();
+      editor.setSelectionRange(0, 0);
+      queueRender();
+      saveState();
+      refreshDirty();
+    }
+  }
+
+  function newProgram() {
+    try {
+      let dirty = false;
+      if (currentFilePath && openFiles.has(currentFilePath)) {
+        const entry = openFiles.get(currentFilePath);
+        if (!entry.readOnly && editor.value !== entry.savedContent) dirty = true;
+      } else if (lastSavedText !== null && getFullSource() !== lastSavedText) {
+        dirty = true;
+      }
+      for (const [p, entry] of openFiles) {
+        if (p === currentFilePath) continue;
+        if (!entry.readOnly && entry.content !== entry.savedContent) { dirty = true; break; }
+      }
+      if (dirty && !confirm('You have unsaved changes. Start a new program anyway?')) return;
+
+      currentFilePath = null;
+      openFiles.clear();
+      editor.readOnly = false;
+      editorShell.classList.remove('readonly');
+      fileNameInput.disabled = false;
+      fileField.classList.remove('disabled');
+      fileField.title = '';
+      statusFile.textContent = '';
+      userEditedFileName = false;
+      updateAutoBadge();
+
+      treeBody.querySelectorAll('.tree-row.active').forEach(el => el.classList.remove('active'));
+
+      foldRegistry.clear();
+      _braceSrc = null;
+      maskCacheSrc = null;
+
+      fileNameInput.value = 'Main';
+      argsInput.value = '';
+      stdinBox.value = '';
+      editor.value = NEW_PROGRAM_CODE;
+      lastSavedText = null;
+      editor.scrollTop = 0;
+      editor.scrollLeft = 0;
+
+      renderQueued = false;
+      render();
+      refreshDirty();
+      saveState();
+      setStateMessage('New program ready', 'saved');
+      editor.focus();
+      editor.setSelectionRange(0, 0);
+    } catch (err) {
+      console.error('New Program failed:', err);
+      setStateMessage('Could not create new program: ' + err.message, 'error');
+    }
+  }
+
+  newProgramBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    newProgram();
+  });
+
   saveBtn.addEventListener('click', () => save(false));
   saveAsBtn.addEventListener('click', () => save(true));
   folderBtn.addEventListener('click', () => chooseFolder());
 
-  document.getElementById('openBtn').addEventListener('click', () => fileInput.click());
+  document.getElementById('openBtn').addEventListener('click', openFileDialog);
   fileInput.addEventListener('change', () => {
     const file = fileInput.files && fileInput.files[0];
     if (!file) return;
@@ -3487,39 +3774,8 @@
     fileInput.value = '';
   });
 
-  document.getElementById('copyBtn').addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(getFullSource());
-      setStateMessage('Copied to clipboard', 'saved');
-    } catch (_) {
-      editor.select();
-      try { document.execCommand('copy'); setStateMessage('Copied to clipboard', 'saved'); }
-      catch (_) { setStateMessage('Copy failed', 'error'); }
-      editor.setSelectionRange(0, 0);
-    }
-  });
-
-  document.getElementById('clearBtn').addEventListener('click', () => {
-    if (!editor.value.trim() || confirm('Clear the editor? This will detach from the current file.')) {
-      captureCurrentBuffer();
-      currentFilePath = null;
-      fileNameInput.disabled = false;
-      fileField.classList.remove('disabled');
-      statusFile.textContent = '';
-      editor.readOnly = false;
-      editorShell.classList.remove('readonly');
-      userEditedFileName = false;
-      updateAutoBadge();
-
-      editor.value = '';
-      foldRegistry.clear();
-      editor.focus();
-      editor.setSelectionRange(0, 0);
-      queueRender();
-      saveState();
-      refreshDirty();
-    }
-  });
+  document.getElementById('copyBtn').addEventListener('click', copyAll);
+  document.getElementById('clearBtn').addEventListener('click', clearEditorConfirm);
 
   guidesBtn.addEventListener('click', () => {
     state.guides = !state.guides;
@@ -3553,8 +3809,7 @@
   }
   function setFontSize(px) {
     state.fontSize = Math.max(11, Math.min(28, px));
-    document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
-    charWidthCache.width = 0;
+    applyFontSize();
     queueRender();
     saveState();
   }
@@ -3631,7 +3886,8 @@
     treeBasis   = (saved && saved.treeBasis) || 240;
     treeVisible = !!(saved && saved.treeVisible);
 
-    document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
+    /* Apply font size AND integer line-height together. */
+    applyFontSize();
     setTheme(state.theme);
     editorShell.classList.toggle('no-guides', !state.guides);
     guidesBtn.classList.toggle('on', state.guides);
