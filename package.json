@@ -1,20 +1,43 @@
 {
   "name": "java-web-ide",
   "version": "1.0.0",
+  "description": "Desktop Java editor and runner.",
+  "main": "main.js",
   "private": true,
-  "description": "Local web-based Java editor and execution environment",
-  "main": "server.js",
-  "type": "commonjs",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
-  "engines": {
-    "node": ">=18"
+    "start": "electron .",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.example.javawebide",
+    "productName": "Java Web IDE",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "server.js",
+      "public/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "mac": {
+      "target": ["dmg"]
+    },
+    "linux": {
+      "target": ["AppImage"]
+    }
   }
 }
